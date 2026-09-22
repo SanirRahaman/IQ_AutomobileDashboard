@@ -42,4 +42,30 @@ final class AnalysisResults {
   final DeliveryAnalytics deliveries;
   final List<CohortAnalytics> cohorts;
   final List<ManagementInsight> insights;
+
+  List<String> get receivedLeadIds =>
+      leadScope.leads.map((l) => l.id).toList(growable: false);
+  List<String> get deliveredOutcomeIds => leadScope.leads
+      .where((l) => l.isDelivered)
+      .map((l) => l.id)
+      .toList(growable: false);
+  List<String> get lostOutcomeIds => leadScope.leads
+      .where((l) => l.isLost)
+      .map((l) => l.id)
+      .toList(growable: false);
+  List<String> get activeLeadIds => leadScope.leads
+      .where((l) => l.isActive)
+      .map((l) => l.id)
+      .toList(growable: false);
+
+  /// Used by both the scorecard and its supporting records; overlapping
+  /// inactivity and overdue signals must count an opportunity only once.
+  List<String> get followUpLeadIds => pipeline
+      .where((item) =>
+          item.isOverdueOrderStage ||
+          item.ageingBand == PipelineAgeingBand.stale ||
+          item.ageingBand == PipelineAgeingBand.severelyStale)
+      .map((item) => item.leadId)
+      .toSet()
+      .toList(growable: false);
 }

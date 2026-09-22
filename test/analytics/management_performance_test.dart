@@ -53,6 +53,13 @@ void main() {
     expect(r.total!.variance, -3);
     expect(r.total!.missingMonths, 1);
     expect(r.branches.last.target, isNull);
+    expect(r.deliveryRecords.length, r.deliveredCount);
+    final included = r.targetMonths.where((m) => m.performance.target != null);
+    expect(included.fold<int>(0, (s, m) => s + m.performance.actual),
+        r.total!.actual);
+    expect(included.fold<int>(0, (s, m) => s + m.performance.target!),
+        r.total!.target);
+    expect(r.targetMonths.last.performance.target, isNull);
   });
   test('partial months retain full target and explicit qualification', () {
     final r = run([target], start: day(1), end: day(10));
@@ -104,6 +111,18 @@ void main() {
     expect(c.results.performance.total!.target, 1426);
     expect(loaded.report.warnings.length, 14);
     expect(c.results.cohorts.last.isMature, isFalse);
+    expect(c.results.receivedLeadIds.length, c.results.overview.totalLeads);
+    expect(c.results.activeLeadIds.length, 62);
+    expect(c.results.deliveredOutcomeIds.length, 160);
+    expect(c.results.lostOutcomeIds.length, 288);
+    expect(
+        c.results.activeLeadIds
+            .toSet()
+            .intersection(c.results.lostOutcomeIds.toSet()),
+        isEmpty);
+    expect(c.results.followUpLeadIds.toSet().length,
+        c.results.followUpLeadIds.length);
+    expect(c.results.activeLeadIds, containsAll(c.results.followUpLeadIds));
   });
   test(
       'complete months compare delivery events; partial and uncovered months do not',

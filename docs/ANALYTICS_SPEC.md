@@ -154,6 +154,10 @@ The dataset has no separate realized revenue field. Documentation and UI labels 
 
 Every aggregate and future insight must be reproducible from supporting record IDs and a filter definition. Counts and values shown in summaries, charts, and drill-down tables must use the same centralized calculation.
 
+The overview KPI cards open their supporting records. Lead, active, and resolved-outcome lists use the creation-date scope. Conversion separates delivered and lost records and explicitly excludes active opportunities. The follow-up card and its evidence share one unique-ID selection for stale or overdue order-stage opportunities.
+
+The vehicles-delivered card lists the exact delivery events retained by `ManagementPerformanceService`, including delivery dates. Repeated delivery events for a lead remain separate rows in both the dialog and its CSV, matching the event-count numerator. The target dialog uses branch-month contributions emitted by that same calculation pass, including excluded target months; it does not recalculate targets in widgets.
+
 Branch-month target units should be compared with deliveries attributed by delivery month. Any comparison between `target_revenue` and delivered lead value must be labeled as a proxy.
 
 ## Data-quality exclusions

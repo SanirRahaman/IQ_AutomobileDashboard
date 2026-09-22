@@ -50,6 +50,14 @@ class DeliveryComparison {
   int get difference => current - previous;
 }
 
+/// An auditable branch-month contribution to the target scorecard.
+class MonthlyTargetPerformance {
+  const MonthlyTargetPerformance(
+      {required this.month, required this.performance});
+  final DateTime month;
+  final TargetPerformance performance;
+}
+
 class ManagementPerformance {
   const ManagementPerformance(
       {required this.start,
@@ -60,7 +68,9 @@ class ManagementPerformance {
       required this.unavailableReason,
       required this.comparison,
       required this.deliveredCount,
-      required this.deliveredValue});
+      required this.deliveredValue,
+      required this.deliveryRecords,
+      required this.targetMonths});
   final DateTime start;
   final DateTime end;
   final DateTime snapshot;
@@ -70,6 +80,10 @@ class ManagementPerformance {
   final DeliveryComparison? comparison;
   final int deliveredCount;
   final num deliveredValue;
+  // Populated from the same matching pass as the headline, never recalculated
+  // by a widget. Delivery events remain separate even for the same lead.
+  final List<Delivery> deliveryRecords;
+  final List<MonthlyTargetPerformance> targetMonths;
 }
 
 class ManagementPerformanceService {
@@ -133,6 +147,7 @@ class ManagementPerformanceService {
     final dimensionFiltered =
         repId != null || source != null || model != null || status != null;
     final rows = <TargetPerformance>[];
+    final monthlyRows = <MonthlyTargetPerformance>[];
     if (!dimensionFiltered) {
       for (final b in selectedBranches) {
         var target = 0;
@@ -150,19 +165,42 @@ class ManagementPerformanceService {
           // Duplicate/invalid targets cannot be unambiguously combined.
           if (ts.length != 1 || ts.single.targetUnits < 0) {
             missing++;
+            monthlyRows.add(MonthlyTargetPerformance(
+                month: m,
+                performance: TargetPerformance(
+                    branchId: b.id,
+                    branchName: b.name,
+                    actual: 0,
+                    target: null,
+                    missingMonths: 1,
+                    partialPeriod: false,
+                    leadIds: const [])));
             continue;
           }
           supported++;
           target += ts.single.targetUnits;
           final last = DateTime.utc(m.year, m.month + 1, 0);
-          partial |=
+          final partialMonth =
               from.isAfter(m) || to.isBefore(last) || snapshot.isBefore(last);
-          ids.addAll(current
+          partial |= partialMonth;
+          final monthIds = current
               .where((d) =>
                   leads[d.leadId]!.branchId == b.id &&
                   d.deliveryDate.year == m.year &&
                   d.deliveryDate.month == m.month)
-              .map((d) => d.leadId));
+              .map((d) => d.leadId)
+              .toList(growable: false);
+          ids.addAll(monthIds);
+          monthlyRows.add(MonthlyTargetPerformance(
+              month: m,
+              performance: TargetPerformance(
+                  branchId: b.id,
+                  branchName: b.name,
+                  actual: monthIds.length,
+                  target: ts.single.targetUnits,
+                  missingMonths: 0,
+                  partialPeriod: partialMonth,
+                  leadIds: List.unmodifiable(monthIds))));
         }
         rows.add(TargetPerformance(
             branchId: b.id,
@@ -203,6 +241,8 @@ class ManagementPerformanceService {
           previousEnd: priorEnd);
     }
     return ManagementPerformance(
+        deliveryRecords: List.unmodifiable(current),
+        targetMonths: List.unmodifiable(monthlyRows),
         start: from,
         end: to,
         snapshot: snapshot,

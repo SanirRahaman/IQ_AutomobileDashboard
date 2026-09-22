@@ -482,37 +482,119 @@ class _ComparisonTable extends StatelessWidget {
                   .toList()));
     }
     return Card(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          showCheckboxColumn: false,
-          headingRowColor: WidgetStateProperty.all(AppColors.canvas),
-          columns: [
-            DataColumn(
-                label: Text(onRowTap == null
-                    ? 'Measure'
-                    : 'Representative · select to review')),
-            const DataColumn(label: Text('Current view')),
-            DataColumn(label: Text(benchmarkLabel)),
-          ],
-          rows: rows
-              .map((row) => DataRow(
-                    onSelectChanged: onRowTap == null
-                        ? null
-                        : (_) => onRowTap!(row.id ?? row.label),
-                    cells: [
-                      DataCell(onRowTap == null
-                          ? Text(row.label,
-                              style: const TextStyle(fontWeight: FontWeight.w600))
-                          : TextButton.icon(
-                              onPressed: () => onRowTap!(row.id ?? row.label),
-                              icon: const Icon(Icons.chevron_right, size: 18),
-                              label: Text(row.label))),
-                      DataCell(Text(row.scoped)),
-                      DataCell(Text(row.benchmark)),
-                    ],
-                  ))
-              .toList(growable: false),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          Container(
+            color: AppColors.canvas,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                const Expanded(flex: 50, child: Text('Measure')),
+                const Expanded(
+                  flex: 25,
+                  child: Text('Current view', textAlign: TextAlign.right),
+                ),
+                Expanded(
+                  flex: 25,
+                  child: Text(benchmarkLabel, textAlign: TextAlign.right),
+                ),
+              ],
+            ),
+          ),
+          ...rows.indexed.map(
+            (item) => _ComparisonTableRow(
+              row: item.$2,
+              onTap: onRowTap == null
+                  ? null
+                  : () => onRowTap!(item.$2.id ?? item.$2.label),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ComparisonTableRow extends StatefulWidget {
+  const _ComparisonTableRow({required this.row, this.onTap});
+
+  final ComparisonRow row;
+  final VoidCallback? onTap;
+
+  @override
+  State<_ComparisonTableRow> createState() => _ComparisonTableRowState();
+}
+
+class _ComparisonTableRowState extends State<_ComparisonTableRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final row = Container(
+      color: _hovered ? AppColors.infoSoft : AppColors.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 50,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.row.label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                if (widget.onTap != null) ...[
+                  const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right,
+                      size: 18, color: AppColors.muted),
+                ],
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 25,
+            child: Text(
+              widget.row.scoped,
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Expanded(
+            flex: 25,
+            child: Text(
+              widget.row.benchmark,
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+    if (widget.onTap == null) {
+      return DecoratedBox(
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppColors.border)),
+        ),
+        child: row,
+      );
+    }
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: InkWell(
+        onTap: widget.onTap,
+        child: DecoratedBox(
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.border)),
+          ),
+          child: row,
         ),
       ),
     );

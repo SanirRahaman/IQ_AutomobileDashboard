@@ -11,6 +11,107 @@ import '../fixtures/analytics_fixture.dart';
 void main() {
   for (final size in const [
     Size(1440, 1000),
+    Size(820, 1000),
+    Size(390, 844)
+  ]) {
+    testWidgets(
+        'KPI dialogs preserve evidence and remain responsive at ${size.width}',
+        (tester) async {
+      await tester.binding.setSurfaceSize(size);
+      final controller = AnalysisController(dataset: _dashboardDataset());
+      addTearDown(() {
+        controller.dispose();
+        tester.binding.setSurfaceSize(null);
+      });
+      await tester.pumpWidget(YoyotaDealersApp(controller: controller));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.descendant(
+          of: find.byKey(const Key('kpi-enquiries')),
+          matching: find.byType(IconButton)));
+      await tester.pumpAndSettle();
+      expect(find.text('Leads created inside the selected period and filters.'),
+          findsOneWidget);
+      expect(find.byKey(const Key('export-records')), findsNothing);
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+
+      Future<void> open(String kind) async {
+        final card = find.byKey(Key('kpi-$kind'));
+        await tester.ensureVisible(card);
+        await tester.tap(card);
+        await tester.pumpAndSettle();
+        expect(find.byType(Dialog), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      }
+
+      Future<void> close() async {
+        await tester.tap(find.byTooltip('Close evidence'));
+        await tester.pumpAndSettle();
+      }
+
+      await open('enquiries');
+      expect(find.byKey(const Key('evidence-lead-active-b1')), findsOneWidget);
+      await tester.scrollUntilVisible(
+          find.byKey(const Key('evidence-lead-lost-b2')), 100,
+          scrollable: find
+              .descendant(
+                  of: find.descendant(of: find.byType(Dialog), matching: find.byType(ListView)), matching: find.byType(Scrollable))
+              .first);
+      expect(find.byKey(const Key('evidence-lead-lost-b2')), findsOneWidget);
+      await close();
+
+      await open('conversion');
+      expect(find.textContaining('50.0% = 1 delivered ÷ 2 resolved'),
+          findsOneWidget);
+      expect(find.byKey(const Key('evidence-lead-active-b1')), findsNothing);
+      await tester.tap(find.text('Lost (1)'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('evidence-lead-delivered-b1')), findsNothing);
+      await tester.tap(find.byKey(const Key('evidence-lead-lost-b2')));
+      await tester.pumpAndSettle();
+      expect(find.text('Complete status timeline'), findsOneWidget);
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await close();
+
+      await open('active');
+      expect(find.byKey(const Key('evidence-lead-active-b1')), findsOneWidget);
+      expect(find.byKey(const Key('evidence-lead-delivered-b1')), findsNothing);
+      await close();
+
+      await open('delivered');
+      await tester.tap(find.byKey(const Key('evidence-delivery-0')));
+      await tester.pumpAndSettle();
+      expect(find.text('Delivery record'), findsOneWidget);
+      expect(find.text('07 Jan 2025'), findsWidgets);
+      expect(tester.takeException(), isNull);
+      await close();
+
+      await open('attention');
+      expect(find.text('No supporting opportunities are available.'),
+          findsOneWidget);
+      await close();
+
+      await open('target');
+      expect(find.text('Target attainment breakdown'), findsOneWidget);
+      expect(
+          find.text(
+              'No comparable branch targets are available for this period.'),
+          findsWidgets);
+      await tester.tap(find.byTooltip('Close target breakdown'));
+      await tester.pumpAndSettle();
+
+      controller.setBranch('B1');
+      await tester.pumpAndSettle();
+      await open('enquiries');
+      expect(find.byKey(const Key('evidence-lead-lost-b2')), findsNothing);
+      await close();
+    });
+  }
+
+  for (final size in const [
+    Size(1440, 1000),
     Size(1280, 800),
     Size(1024, 768),
     Size(768, 1024),
@@ -36,6 +137,36 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('target card shows supplied monthly actuals and exclusions',
+      (tester) async {
+    final base = _dashboardDataset();
+    final controller = AnalysisController(
+        dataset: DealershipDataset(
+            metadata: base.metadata,
+            branches: base.branches,
+            salesReps: base.salesReps,
+            leads: base.leads,
+            deliveries: base.deliveries,
+            targets: [
+          Target(
+              branchId: 'B1', month: day(1), targetUnits: 4, targetRevenue: 100)
+        ]));
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(YoyotaDealersApp(controller: controller));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('kpi-target')));
+    await tester.pumpAndSettle();
+    expect(find.text('25.0% attained'), findsWidgets);
+    expect(
+        find.text('1 actual deliveries ÷ 4 target vehicles'), findsOneWidget);
+    expect(find.text('Branch One · Jan 2025'), findsOneWidget);
+    expect(find.text('Actual 1'), findsOneWidget);
+    expect(find.text('Variance -3'), findsOneWidget);
+    expect(find.text('Excluded · missing, duplicate or invalid target'),
+        findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('no-results state resets back to network view', (tester) async {
     await tester.binding.setSurfaceSize(const Size(900, 900));
@@ -116,6 +247,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('evidence-lead-active-b1')));
     await tester.pumpAndSettle();
+    expect(find.byType(Dialog), findsOneWidget);
     expect(find.textContaining('Included because this opportunity'),
         findsOneWidget);
     expect(find.text('Complete status timeline'), findsOneWidget);

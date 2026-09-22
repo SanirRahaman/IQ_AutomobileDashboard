@@ -175,13 +175,7 @@ final class DashboardPresenter {
   DashboardViewData present(AnalysisController controller) {
     final results = controller.results;
     final overview = results.overview;
-    final attentionIds = results.pipeline
-        .where((item) =>
-            item.isOverdueOrderStage ||
-            item.ageingBand == PipelineAgeingBand.stale ||
-            item.ageingBand == PipelineAgeingBand.severelyStale)
-        .map((item) => item.leadId)
-        .toSet();
+    final attentionIds = results.followUpLeadIds;
     final branchName = controller.dataset.branches
         .where((branch) => branch.id == controller.filters.branchId)
         .map((branch) => branch.name)

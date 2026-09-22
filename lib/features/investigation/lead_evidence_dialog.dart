@@ -18,33 +18,64 @@ Future<void> showEvidenceListDialog({
   required String footer,
   String? inclusionReason,
   Map<String, String> inclusionReasons = const {},
+  Map<String, List<String>> groups = const {},
+  List<Delivery>? deliveries,
 }) {
-  final records = {
-    for (final lead in controller.results.leadScope.leads) lead.id: lead,
-    for (final lead in controller.results.deliveryScope.leads) lead.id: lead,
-  };
-  final branchName = controller.dataset.branches
-      .where((b) => b.id == controller.filters.branchId)
-      .map((b) => b.name)
-      .firstOrNull;
-  const exporter = FollowUpCsv();
-  final exportLabel = '${branchName ?? 'all-branches'}-$title';
-  final activeCsv = exporter.create(
-      dataset: controller.dataset,
-      scopedRecords: records.values,
-      requestedIds: leadIds,
-      label: exportLabel,
-      reason: inclusionReason ?? footer,
-      reasons: inclusionReasons);
-  final allCsv = exporter.create(
-      dataset: controller.dataset,
-      scopedRecords: records.values,
-      requestedIds: leadIds,
-      label: exportLabel,
-      activeOnly: false,
-      reason: inclusionReason ?? footer,
-      reasons: inclusionReasons);
-  void save(BuildContext context, CsvExport csv) {
+  return showDialog<void>(
+    context: context,
+    builder: (_) => _EvidenceListDialog(
+      controller: controller,
+      title: title,
+      subtitle: subtitle,
+      leadIds: leadIds,
+      footer: footer,
+      inclusionReason: inclusionReason,
+      inclusionReasons: inclusionReasons,
+      groups: groups,
+      deliveries: deliveries,
+    ),
+  );
+}
+
+class _EvidenceListDialog extends StatefulWidget {
+  const _EvidenceListDialog({
+    required this.controller,
+    required this.title,
+    required this.subtitle,
+    required this.leadIds,
+    required this.footer,
+    required this.inclusionReason,
+    required this.inclusionReasons,
+    required this.groups,
+    required this.deliveries,
+  });
+
+  final AnalysisController controller;
+  final String title;
+  final String subtitle;
+  final List<String> leadIds;
+  final String footer;
+  final String? inclusionReason;
+  final Map<String, String> inclusionReasons;
+  final Map<String, List<String>> groups;
+  final List<Delivery>? deliveries;
+
+  @override
+  State<_EvidenceListDialog> createState() => _EvidenceListDialogState();
+}
+
+class _EvidenceListDialogState extends State<_EvidenceListDialog> {
+  int? _selectedIndex;
+  int _groupIndex = 0;
+
+  Map<String, AnalyticalLead> get _records => {
+        for (final lead in widget.controller.results.leadScope.leads)
+          lead.id: lead,
+        for (final lead in widget.controller.results.deliveryScope.leads)
+          lead.id: lead,
+      };
+
+  void _save(CsvExport csv) {
     try {
       downloadCsv(csv.filename, csv.content);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -56,103 +87,165 @@ Future<void> showEvidenceListDialog({
     }
   }
 
-  return showDialog<void>(
-    context: context,
-    builder: (dialogContext) => Dialog(
+  @override
+  Widget build(BuildContext context) {
+    final records = _records;
+    final ids = widget.groups.isEmpty
+        ? widget.leadIds
+        : widget.groups.values.elementAt(_groupIndex);
+    final selectedId = _selectedIndex == null ? null : ids[_selectedIndex!];
+    final selectedDelivery =
+        _selectedIndex == null ? null : widget.deliveries?[_selectedIndex!];
+    final branchName = widget.controller.dataset.branches
+        .where((b) => b.id == widget.controller.filters.branchId)
+        .map((b) => b.name)
+        .firstOrNull;
+    const exporter = FollowUpCsv();
+    final exportLabel = '${branchName ?? 'all-branches'}-${widget.title}';
+    final activeCsv = exporter.create(
+        dataset: widget.controller.dataset,
+        scopedRecords: records.values,
+        requestedIds: ids,
+        label: exportLabel,
+        reason: widget.inclusionReason ?? widget.footer,
+        reasons: widget.inclusionReasons);
+    final allCsv = widget.deliveries != null
+        ? exporter.createDeliveries(
+            dataset: widget.controller.dataset,
+            deliveries: widget.deliveries!,
+            label: exportLabel)
+        : exporter.create(
+            dataset: widget.controller.dataset,
+            scopedRecords: records.values,
+            requestedIds: ids,
+            label: exportLabel,
+            activeOnly: false,
+            reason: widget.inclusionReason ?? widget.footer,
+            reasons: widget.inclusionReasons);
+    final selected = records[selectedId];
+    return Dialog(
       insetPadding: const EdgeInsets.all(20),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 780, maxHeight: 700),
+        constraints: BoxConstraints(
+          maxWidth: 1120,
+          maxHeight: MediaQuery.sizeOf(context).height - 32,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 22, 16, 16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(title,
-                            style: Theme.of(context).textTheme.titleLarge),
-                        const SizedBox(height: 4),
-                        Text(subtitle,
-                            style: Theme.of(context).textTheme.bodyMedium),
-                      ],
-                    ),
+            ConstrainedBox(
+                constraints: BoxConstraints(
+                    maxHeight: MediaQuery.sizeOf(context).height * .24),
+                child: SingleChildScrollView(
+                    child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 22, 16, 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(widget.title,
+                                style: Theme.of(context).textTheme.titleLarge),
+                            const SizedBox(height: 4),
+                            Text(widget.subtitle,
+                                style: Theme.of(context).textTheme.bodyMedium),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Close evidence',
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    tooltip: 'Close evidence',
-                    onPressed: () => Navigator.pop(dialogContext),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-            ),
+                ))),
             Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
                 child: Wrap(spacing: 8, runSpacing: 8, children: [
-                  if (activeCsv.count > 0)
+                  if (activeCsv.count > 0 && widget.deliveries == null)
                     FilledButton.icon(
                         key: const Key('export-follow-up'),
-                        onPressed: () => save(dialogContext, activeCsv),
+                        onPressed: () => _save(activeCsv),
                         icon: const Icon(Icons.download, size: 18),
                         label: Text('Download follow-up (${activeCsv.count})')),
                   OutlinedButton.icon(
                       key: const Key('export-records'),
-                      onPressed: allCsv.count == 0
-                          ? null
-                          : () => save(dialogContext, allCsv),
+                      onPressed: allCsv.count == 0 ? null : () => _save(allCsv),
                       icon: const Icon(Icons.download, size: 18),
                       label: Text('All ${allCsv.count} records · CSV')),
                 ])),
+            if (widget.groups.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+                child: Wrap(spacing: 8, runSpacing: 4, children: [
+                  for (final item in widget.groups.entries.indexed)
+                    ChoiceChip(
+                      label: Text('${item.$2.key} (${item.$2.value.length})'),
+                      selected: _groupIndex == item.$1,
+                      onSelected: (_) => setState(() {
+                        _groupIndex = item.$1;
+                        _selectedIndex = null;
+                      }),
+                    ),
+                ]),
+              ),
             const Divider(height: 1),
             Expanded(
-              child: leadIds.isEmpty
-                  ? const Center(
-                      child: Text('No supporting opportunities are available.'))
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: leadIds.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final id = leadIds[index];
-                        final record = records[id];
-                        return ListTile(
-                          key: Key('evidence-lead-$id'),
-                          dense: true,
-                          contentPadding:
-                              const EdgeInsets.symmetric(horizontal: 8),
-                          title: Text(record?.lead.customerName ?? id),
-                          subtitle: Text(record == null
-                              ? 'Record $id'
-                              : '$id · ${record.lead.modelInterested} · '
-                                  '${_humanize(record.lead.status.rawValue)}'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(record == null
-                                  ? '—'
-                                  : DashboardPresenter.formatValue(
-                                      record.dealValue)),
-                              const SizedBox(width: 6),
-                              const Icon(Icons.chevron_right,
-                                  color: AppColors.muted),
-                            ],
+              child: LayoutBuilder(builder: (context, constraints) {
+                final split = constraints.maxWidth >= 760;
+                final list = _EvidenceRecordList(
+                  leadIds: ids,
+                  records: records,
+                  deliveries: widget.deliveries,
+                  selectedIndex: _selectedIndex,
+                  onSelected: (index) => setState(() => _selectedIndex = index),
+                );
+                final detail = AnimatedSwitcher(
+                  layoutBuilder: (current, previous) => Stack(
+                    fit: StackFit.expand,
+                    children: [...previous, if (current != null) current],
+                  ),
+                  duration: const Duration(milliseconds: 180),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  child: selected == null
+                      ? const KeyedSubtree(
+                          key: ValueKey('evidence-placeholder'),
+                          child: _EvidencePlaceholder(),
+                        )
+                      : KeyedSubtree(
+                          key: ValueKey('$_groupIndex-$_selectedIndex'),
+                          child: _LeadEvidencePanel(
+                            controller: widget.controller,
+                            record: selected,
+                            inclusionReason:
+                                widget.inclusionReasons[selected.id] ??
+                                    widget.inclusionReason,
+                            delivery: selectedDelivery,
+                            onClose: () =>
+                                setState(() => _selectedIndex = null),
                           ),
-                          onTap: record == null
-                              ? null
-                              : () => showLeadEvidenceDialog(
-                                    context: context,
-                                    controller: controller,
-                                    record: record,
-                                    inclusionReason:
-                                        inclusionReasons[id] ?? inclusionReason,
-                                  ),
-                        );
-                      },
-                    ),
+                        ),
+                );
+                return split
+                    ? Row(children: [
+                        SizedBox(width: 430, child: list),
+                        const VerticalDivider(width: 1),
+                        Expanded(child: detail),
+                      ])
+                    : Column(children: [
+                        if (selected == null) Expanded(child: list),
+                        if (selected != null) ...[
+                          SizedBox(
+                              height: constraints.maxHeight * .28, child: list),
+                          const Divider(height: 1),
+                          Expanded(child: detail),
+                        ],
+                      ]);
+              }),
             ),
             Container(
               padding: const EdgeInsets.all(18),
@@ -160,15 +253,112 @@ Future<void> showEvidenceListDialog({
                 color: AppColors.canvas,
                 border: Border(top: BorderSide(color: AppColors.border)),
               ),
-              child: Text(
-                  '$footer\nFollow-up downloads contain active opportunities only.',
-                  style: Theme.of(context).textTheme.bodyMedium),
+              child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                      maxHeight: MediaQuery.sizeOf(context).height * .12),
+                  child: SingleChildScrollView(
+                      child: Text(
+                          activeCsv.count > 0
+                              ? '${widget.footer}\nFollow-up downloads contain active opportunities only.'
+                              : widget.footer,
+                          style: Theme.of(context).textTheme.bodyMedium))),
             ),
           ],
         ),
       ),
-    ),
-  );
+    );
+  }
+}
+
+class _EvidenceRecordList extends StatelessWidget {
+  const _EvidenceRecordList({
+    required this.leadIds,
+    required this.records,
+    required this.selectedIndex,
+    required this.onSelected,
+    this.deliveries,
+  });
+
+  final List<String> leadIds;
+  final Map<String, AnalyticalLead> records;
+  final int? selectedIndex;
+  final ValueChanged<int> onSelected;
+  final List<Delivery>? deliveries;
+
+  @override
+  Widget build(BuildContext context) {
+    if (leadIds.isEmpty) {
+      return const Center(
+          child: Text('No supporting opportunities are available.'));
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: leadIds.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 6),
+      itemBuilder: (context, index) {
+        final id = leadIds[index];
+        final record = records[id];
+        final selected = index == selectedIndex;
+        final delivery = deliveries?[index];
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            color: selected ? AppColors.infoSoft : AppColors.surface,
+            borderRadius: BorderRadius.circular(10),
+            border:
+                Border.all(color: selected ? AppColors.info : AppColors.border),
+          ),
+          child: ListTile(
+            key: Key(delivery == null
+                ? 'evidence-lead-$id'
+                : 'evidence-delivery-$index'),
+            selected: selected,
+            dense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            title: Text(record?.lead.customerName ?? id),
+            subtitle: Text(delivery != null
+                ? '${DashboardPresenter.formatDate(delivery.deliveryDate)} · ${record?.vehicleModel ?? id}'
+                : record == null
+                    ? 'Record $id'
+                    : '$id · ${record.lead.modelInterested} · '
+                        '${_humanize(record.lead.status.rawValue)}'),
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              Text(record == null
+                  ? '—'
+                  : DashboardPresenter.formatValue(record.dealValue)),
+              const SizedBox(width: 6),
+              Icon(selected ? Icons.arrow_forward : Icons.chevron_right,
+                  color: selected ? AppColors.info : AppColors.muted),
+            ]),
+            onTap: record == null ? null : () => onSelected(index),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _EvidencePlaceholder extends StatelessWidget {
+  const _EvidencePlaceholder();
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.touch_app_outlined,
+                size: 34, color: AppColors.muted),
+            const SizedBox(height: 12),
+            Text('Select a supporting record',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text('The selected record and its evidence will appear here.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium),
+          ]),
+        ),
+      );
 }
 
 Future<void> showLeadEvidenceDialog({
@@ -177,166 +367,172 @@ Future<void> showLeadEvidenceDialog({
   required AnalyticalLead record,
   String? inclusionReason,
 }) {
-  final branch = controller.dataset.branches
-      .where((item) => item.id == record.branchId)
-      .firstOrNull;
-  final rep = controller.dataset.salesReps
-      .where((item) => item.id == record.repId)
-      .firstOrNull;
   return showDialog<void>(
     context: context,
-    builder: (dialogContext) => Dialog(
+    builder: (_) => Dialog(
       insetPadding: const EdgeInsets.all(18),
-      alignment: Alignment.centerRight,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 620, maxHeight: 820),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(24, 22, 16, 18),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.border)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(record.lead.customerName,
-                            style: Theme.of(context).textTheme.headlineSmall),
-                        const SizedBox(height: 4),
-                        Text('Lead ${record.id}',
-                            style: Theme.of(context).textTheme.bodyMedium),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Close lead evidence',
-                    onPressed: () => Navigator.pop(dialogContext),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (inclusionReason != null) ...[
-                      Container(
-                        key: const Key('lead-inclusion-reason'),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppColors.infoSoft,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFB2DDFF)),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(Icons.info_outline,
-                                color: AppColors.info, size: 19),
-                            const SizedBox(width: 9),
-                            Expanded(
-                              child: Text('Included because $inclusionReason',
-                                  style:
-                                      Theme.of(context).textTheme.bodyMedium),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                    Text('Lead details',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 12),
-                    _DetailGrid(items: [
-                      ('Phone', record.lead.phone),
-                      (
-                        'Data as of',
-                        DashboardPresenter.formatDate(
-                            record.context.snapshotDate)
-                      ),
-                      ('Vehicle', record.lead.modelInterested),
-                      (
-                        'Source',
-                        _humanize(record.lead.source ?? 'Unattributed')
-                      ),
-                      (
-                        'Deal value',
-                        DashboardPresenter.formatValue(record.dealValue)
-                      ),
-                      (
-                        'Current status',
-                        _humanize(record.lead.status.rawValue)
-                      ),
-                      (
-                        'Expected close',
-                        _timestamp(record.lead.expectedCloseDate,
-                            dateOnly: true)
-                      ),
-                      ('Last activity', _timestamp(record.lead.lastActivityAt)),
-                    ]),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: branch == null
-                              ? null
-                              : () {
-                                  final navigator = Navigator.of(dialogContext);
-                                  navigator.popUntil(
-                                      (route) => route is! PopupRoute<void>);
-                                  AppNavigation.go(context,
-                                      '/branch/${Uri.encodeComponent(branch.id)}',
-                                      filters: controller.filters);
-                                },
-                          icon: const Icon(Icons.store_outlined, size: 17),
-                          label: Text(branch?.name ?? record.branchId),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: rep == null
-                              ? null
-                              : () {
-                                  final navigator = Navigator.of(dialogContext);
-                                  navigator.popUntil(
-                                      (route) => route is! PopupRoute<void>);
-                                  AppNavigation.go(context,
-                                      '/rep/${Uri.encodeComponent(rep.id)}',
-                                      filters: controller.filters);
-                                },
-                          icon: const Icon(Icons.person_outline, size: 17),
-                          label: Text(rep?.name ?? record.repId),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 28),
-                    Text('Complete status timeline',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 14),
-                    ...record.lead.statusHistory.indexed
-                        .map((item) => _TimelineEntry(
-                              entry: item.$2,
-                              isLast: item.$1 ==
-                                  record.lead.statusHistory.length - 1,
-                            )),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        child: _LeadEvidencePanel(
+          controller: controller,
+          record: record,
+          inclusionReason: inclusionReason,
         ),
       ),
     ),
   );
 }
+
+class _LeadEvidencePanel extends StatelessWidget {
+  const _LeadEvidencePanel({
+    required this.controller,
+    required this.record,
+    required this.inclusionReason,
+    this.onClose,
+    this.delivery,
+  });
+
+  final AnalysisController controller;
+  final AnalyticalLead record;
+  final String? inclusionReason;
+  final VoidCallback? onClose;
+  final Delivery? delivery;
+
+  @override
+  Widget build(BuildContext context) {
+    final branch = controller.dataset.branches
+        .where((item) => item.id == record.branchId)
+        .firstOrNull;
+    final rep = controller.dataset.salesReps
+        .where((item) => item.id == record.repId)
+        .firstOrNull;
+    void navigateTo(String path) {
+      Navigator.of(context).pop();
+      AppNavigation.go(context, path, filters: controller.filters);
+    }
+
+    return SingleChildScrollView(
+        child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 18, 12, 14),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.border)),
+          ),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(record.lead.customerName,
+                        style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(height: 3),
+                    Text('Lead ${record.id} · Selected supporting record',
+                        style: Theme.of(context).textTheme.bodyMedium),
+                  ]),
+            ),
+            IconButton(
+              tooltip: onClose == null
+                  ? 'Close lead evidence'
+                  : 'Clear selected record',
+              onPressed: onClose ?? () => Navigator.maybePop(context),
+              icon: const Icon(Icons.close),
+            ),
+          ]),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            if (delivery != null) ...[
+              Text('Delivery record',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 10),
+              _DetailGrid(items: [
+                (
+                  'Delivery date',
+                  DashboardPresenter.formatDate(delivery!.deliveryDate)
+                ),
+                (
+                  'Order date',
+                  DashboardPresenter.formatDate(delivery!.orderDate)
+                ),
+                ('Recorded duration', '${delivery!.daysToDeliver} days'),
+                (
+                  'Recorded delay reason',
+                  delivery!.delayReason ?? 'None recorded'
+                ),
+              ]),
+              const SizedBox(height: 16),
+            ],
+            if (inclusionReason != null) ...[
+              Container(
+                key: const Key('lead-inclusion-reason'),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.infoSoft,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFB2DDFF)),
+                ),
+                child: Text('Included because $inclusionReason',
+                    style: Theme.of(context).textTheme.bodyMedium),
+              ),
+              const SizedBox(height: 16),
+            ],
+            Text('Lead details',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 10),
+            _DetailGrid(items: [
+              ('Phone', record.lead.phone),
+              (
+                'Data as of',
+                DashboardPresenter.formatDate(record.context.snapshotDate)
+              ),
+              ('Vehicle', record.lead.modelInterested),
+              ('Source', _humanize(record.lead.source ?? 'Unattributed')),
+              ('Deal value', DashboardPresenter.formatValue(record.dealValue)),
+              ('Current status', _humanize(record.lead.status.rawValue)),
+              (
+                'Expected close',
+                _timestamp(record.lead.expectedCloseDate, dateOnly: true)
+              ),
+              ('Last activity', _timestamp(record.lead.lastActivityAt)),
+            ]),
+            const SizedBox(height: 10),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              OutlinedButton.icon(
+                onPressed: branch == null
+                    ? null
+                    : () =>
+                        navigateTo('/branch/${Uri.encodeComponent(branch.id)}'),
+                icon: const Icon(Icons.store_outlined, size: 17),
+                label: Text(branch?.name ?? record.branchId),
+              ),
+              OutlinedButton.icon(
+                onPressed: rep == null
+                    ? null
+                    : () => navigateTo('/rep/${Uri.encodeComponent(rep.id)}'),
+                icon: const Icon(Icons.person_outline, size: 17),
+                label: Text(rep?.name ?? record.repId),
+              ),
+            ]),
+            const SizedBox(height: 22),
+            Text('Complete status timeline',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            ...record.lead.statusHistory.indexed.map((item) => _TimelineEntry(
+                  entry: item.$2,
+                  isLast: item.$1 == record.lead.statusHistory.length - 1,
+                )),
+          ]),
+        ),
+      ],
+    ));
+  }
+}
+
+// The list and detail views intentionally share one dialog so the selected record remains in context.
 
 class _DetailGrid extends StatelessWidget {
   const _DetailGrid({required this.items});

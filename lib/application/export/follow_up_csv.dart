@@ -13,6 +13,50 @@ class CsvExport {
 /// include resolved records, even when the finding also references losses.
 class FollowUpCsv {
   const FollowUpCsv();
+
+  /// Export one row per counted delivery event, not one row per unique lead.
+  CsvExport createDeliveries(
+      {required DealershipDataset dataset,
+      required List<Delivery> deliveries,
+      required String label}) {
+    final leads = {for (final l in dataset.leads) l.id: l};
+    final branches = {for (final b in dataset.branches) b.id: b.name};
+    final reps = {for (final r in dataset.salesReps) r.id: r.name};
+    final rows = <List<Object?>>[
+      [
+        'Lead reference',
+        'Customer',
+        'Phone',
+        'Branch',
+        'Representative',
+        'Vehicle',
+        'Delivery date',
+        'Order date',
+        'Recorded days to deliver',
+        'Recorded delay reason'
+      ],
+      for (final d in deliveries)
+        [
+          d.leadId,
+          leads[d.leadId]?.customerName,
+          leads[d.leadId]?.phone,
+          branches[leads[d.leadId]?.branchId],
+          reps[leads[d.leadId]?.assignedTo],
+          leads[d.leadId]?.modelInterested,
+          _date(d.deliveryDate),
+          _date(d.orderDate),
+          d.daysToDeliver,
+          d.delayReason
+        ],
+    ];
+    final slug = label.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    return CsvExport(
+        filename: '$slug-deliveries.csv',
+        content:
+            '\uFEFF${rows.map((row) => row.map(_cell).join(',')).join('\r\n')}\r\n',
+        count: deliveries.length);
+  }
+
   CsvExport create({
     required DealershipDataset dataset,
     required Iterable<AnalyticalLead> scopedRecords,

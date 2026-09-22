@@ -1,4 +1,5 @@
 import '../shared/target_panel.dart';
+import 'target_breakdown_dialog.dart';
 import '../../app/analysis_router.dart';
 import 'package:flutter/material.dart';
 
@@ -109,7 +110,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                             .titleMedium)),
                               ]),
                           const SizedBox(height: 12),
-                          _PulseGrid(metrics: _viewData.pulse),
+                          _PulseGrid(
+                              metrics: _viewData.pulse,
+                              onPressed: _showMetricRecords),
                           const SizedBox(height: 10),
                           Wrap(spacing: 8, runSpacing: 4, children: [
                             TextButton.icon(
@@ -286,6 +289,48 @@ class _DashboardPageState extends State<DashboardPage> {
                 ]));
   }
 
+  void _showMetricRecords(PulseMetricViewData metric) {
+    final results = widget.controller.results;
+    if (metric.kind == PulseMetricKind.target) {
+      showTargetBreakdownDialog(
+          context: context, performance: results.performance);
+      return;
+    }
+    final ids = switch (metric.kind) {
+      PulseMetricKind.enquiries => results.receivedLeadIds,
+      PulseMetricKind.active => results.activeLeadIds,
+      PulseMetricKind.attention => results.followUpLeadIds,
+      PulseMetricKind.conversion => results.deliveredOutcomeIds,
+      PulseMetricKind.delivered || PulseMetricKind.deliveredValue => results
+          .performance.deliveryRecords
+          .map((d) => d.leadId)
+          .toList(growable: false),
+      PulseMetricKind.target => const <String>[],
+    };
+    final isDelivery = metric.kind == PulseMetricKind.delivered ||
+        metric.kind == PulseMetricKind.deliveredValue;
+    showEvidenceListDialog(
+      context: context,
+      controller: widget.controller,
+      title: metric.label,
+      subtitle: metric.kind == PulseMetricKind.conversion
+          ? '${metric.value} = ${results.overview.delivered} delivered ÷ ${results.overview.resolvedLeads} resolved. ${results.overview.activeLeads} active opportunities excluded.'
+          : '${metric.value} · ${_viewData.scopeLabel} · ${_viewData.dateLabel}',
+      leadIds: ids,
+      footer: metric.helper,
+      inclusionReason: isDelivery
+          ? 'this delivery occurred within the selected period and filters'
+          : null,
+      deliveries: isDelivery ? results.performance.deliveryRecords : null,
+      groups: metric.kind == PulseMetricKind.conversion
+          ? {
+              'Delivered': results.deliveredOutcomeIds,
+              'Lost': results.lostOutcomeIds
+            }
+          : const {},
+    );
+  }
+
   Future<void> _chooseDateRange() async {
     final current = widget.controller.filters.dateRange;
     final result = await showDateRangePicker(
@@ -376,6 +421,7 @@ class _ProductBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       color: AppColors.ink,
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween, //todo check
         children: [
           Container(
             width: 30,
@@ -397,7 +443,7 @@ class _ProductBar extends StatelessWidget {
               letterSpacing: -0.2,
             ),
           ),
-          const Spacer(),
+          // const Spacer(),
           Flexible(
             child: Text(
               scopeLabel,
@@ -579,9 +625,10 @@ class _SectionHeading extends StatelessWidget {
 }
 
 class _PulseGrid extends StatelessWidget {
-  const _PulseGrid({required this.metrics});
+  const _PulseGrid({required this.metrics, required this.onPressed});
 
   final List<PulseMetricViewData> metrics;
+  final ValueChanged<PulseMetricViewData> onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -600,7 +647,8 @@ class _PulseGrid extends StatelessWidget {
         children: metrics
             .map((metric) => SizedBox(
                   width: width,
-                  child: _PulseCard(metric: metric),
+                  child: _PulseCard(
+                      metric: metric, onPressed: () => onPressed(metric)),
                 ))
             .toList(),
       );
@@ -609,42 +657,58 @@ class _PulseGrid extends StatelessWidget {
 }
 
 class _PulseCard extends StatelessWidget {
-  const _PulseCard({required this.metric});
+  const _PulseCard({required this.metric, required this.onPressed});
   final PulseMetricViewData metric;
+  final VoidCallback onPressed;
   @override
   Widget build(BuildContext context) => Card(
-      child: Padding(
-          padding: const EdgeInsets.all(12),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Expanded(
-                  child: Text(metric.label,
-                      style: Theme.of(context).textTheme.bodyMedium)),
-              Tooltip(
-                  message: metric.helper,
-                  child: IconButton(
-                      visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
-                      constraints:
-                          const BoxConstraints(minWidth: 24, minHeight: 24),
-                      tooltip: metric.helper,
-                      onPressed: () => showDialog<void>(
-                          context: context,
-                          builder: (c) => AlertDialog(
-                                  title: Text(metric.label),
-                                  content: Text(metric.helper),
-                                  actions: [
-                                    TextButton(
-                                        onPressed: () => Navigator.pop(c),
-                                        child: const Text('Close'))
-                                  ])),
-                      icon: const Icon(Icons.info_outline, size: 15)))
-            ]),
-            const SizedBox(height: 4),
-            Text(metric.value,
-                style: Theme.of(context).textTheme.headlineSmall),
-          ])));
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+          key: Key('kpi-${metric.kind.name}'),
+          onTap: onPressed,
+          child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Expanded(
+                          child: Text(metric.label,
+                              style: Theme.of(context).textTheme.bodyMedium)),
+                      Tooltip(
+                          message: metric.helper,
+                          child: IconButton(
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                  minWidth: 24, minHeight: 24),
+                              tooltip: metric.helper,
+                              onPressed: () => showDialog<void>(
+                                  context: context,
+                                  builder: (c) => AlertDialog(
+                                          title: Text(metric.label),
+                                          content: Text(metric.helper),
+                                          actions: [
+                                            TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(c),
+                                                child: const Text('Close'))
+                                          ])),
+                              icon: const Icon(Icons.info_outline, size: 15)))
+                    ]),
+                    const SizedBox(height: 4),
+                    Text(metric.value,
+                        style: Theme.of(context).textTheme.headlineSmall),
+                    const SizedBox(height: 8),
+                    Text(
+                        metric.kind == PulseMetricKind.target
+                            ? 'View breakdown →'
+                            : 'View records →',
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelMedium
+                            ?.copyWith(color: AppColors.info)),
+                  ]))));
 }
 
 class _AttentionGrid extends StatelessWidget {
@@ -873,37 +937,152 @@ class _BranchPanel extends StatelessWidget {
       );
     }
     return Card(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          showCheckboxColumn: false,
-          headingRowColor: WidgetStateProperty.all(AppColors.canvas),
-          columns: const [
-            DataColumn(label: Text('Branch')),
-            DataColumn(label: Text('Leads'), numeric: true),
-            DataColumn(label: Text('Resolved outcomes')),
-            DataColumn(label: Text('Conversion')),
-            DataColumn(label: Text('Active value')),
-            DataColumn(label: Text('Lowest progression')),
+      clipBehavior: Clip.antiAlias,
+      child: LayoutBuilder(builder: (context, constraints) {
+        if (constraints.maxWidth < 700) {
+          return Column(
+            children: branches
+                .map((branch) => _BranchCompactRow(
+                      branch: branch,
+                      onPressed: () => onBranchPressed(branch.id),
+                    ))
+                .toList(growable: false),
+          );
+        }
+        return Column(
+          children: [
+            Container(
+              color: AppColors.canvas,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+              child: const Row(children: [
+                Expanded(flex: 26, child: Text('Branch')),
+                Expanded(
+                    flex: 12, child: Text('Leads', textAlign: TextAlign.right)),
+                Expanded(
+                    flex: 20,
+                    child:
+                        Text('Resolved outcomes', textAlign: TextAlign.right)),
+                Expanded(
+                    flex: 15,
+                    child: Text('Conversion', textAlign: TextAlign.right)),
+                Expanded(
+                    flex: 15,
+                    child: Text('Active value', textAlign: TextAlign.right)),
+                Expanded(
+                    flex: 24,
+                    child:
+                        Text('Lowest progression', textAlign: TextAlign.right)),
+                SizedBox(width: 22),
+              ]),
+            ),
+            ...branches.map((branch) => _BranchWideRow(
+                  branch: branch,
+                  onPressed: () => onBranchPressed(branch.id),
+                )),
           ],
-          rows: branches
-              .map((branch) => DataRow(
-                    onSelectChanged: (_) => onBranchPressed(branch.id),
-                    cells: [
-                      DataCell(Text(branch.name,
-                          style: const TextStyle(fontWeight: FontWeight.w600))),
-                      DataCell(Text(branch.leadVolume)),
-                      DataCell(Text(branch.outcomes)),
-                      DataCell(Text(branch.conversion)),
-                      DataCell(Text(branch.activeValue)),
-                      DataCell(Text(branch.bottleneck)),
-                    ],
-                  ))
-              .toList(),
+        );
+      }),
+    );
+  }
+}
+
+class _BranchWideRow extends StatefulWidget {
+  const _BranchWideRow({required this.branch, required this.onPressed});
+
+  final BranchDiagnosticViewData branch;
+  final VoidCallback onPressed;
+
+  @override
+  State<_BranchWideRow> createState() => _BranchWideRowState();
+}
+
+class _BranchWideRowState extends State<_BranchWideRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = Theme.of(context).textTheme.bodyMedium;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        color: _hovered ? AppColors.infoSoft : AppColors.surface,
+        child: InkWell(
+          onTap: widget.onPressed,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            child: Row(children: [
+              Expanded(
+                  flex: 26,
+                  child: Text(widget.branch.name,
+                      style: const TextStyle(fontWeight: FontWeight.w600))),
+              Expanded(
+                  flex: 12,
+                  child: Text(widget.branch.leadVolume,
+                      textAlign: TextAlign.right, style: textStyle)),
+              Expanded(
+                  flex: 20,
+                  child: Text(widget.branch.outcomes,
+                      textAlign: TextAlign.right, style: textStyle)),
+              Expanded(
+                  flex: 15,
+                  child: Text(widget.branch.conversion,
+                      textAlign: TextAlign.right, style: textStyle)),
+              Expanded(
+                  flex: 15,
+                  child: Text(widget.branch.activeValue,
+                      textAlign: TextAlign.right, style: textStyle)),
+              Expanded(
+                  flex: 24,
+                  child: Text(widget.branch.bottleneck,
+                      textAlign: TextAlign.right,
+                      overflow: TextOverflow.ellipsis,
+                      style: textStyle)),
+              const SizedBox(
+                  width: 22,
+                  child: Icon(Icons.chevron_right,
+                      size: 18, color: AppColors.muted)),
+            ]),
+          ),
         ),
       ),
     );
   }
+}
+
+class _BranchCompactRow extends StatelessWidget {
+  const _BranchCompactRow({required this.branch, required this.onPressed});
+
+  final BranchDiagnosticViewData branch;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+          child: Row(children: [
+            Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(branch.name,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 5),
+                    Text(
+                        '${branch.leadVolume} leads · ${branch.outcomes} resolved · ${branch.conversion}',
+                        style: Theme.of(context).textTheme.bodyMedium),
+                    const SizedBox(height: 3),
+                    Text(
+                        'Active value ${branch.activeValue} · ${branch.bottleneck}',
+                        style: Theme.of(context).textTheme.bodyMedium),
+                  ]),
+            ),
+            const Icon(Icons.chevron_right, size: 18, color: AppColors.muted),
+          ]),
+        ),
+      );
 }
 
 class _ResponsivePair extends StatelessWidget {
@@ -968,6 +1147,146 @@ class _DiagnosticPanel extends StatelessWidget {
   }
 }
 
+class _DashboardTable extends StatelessWidget {
+  const _DashboardTable({
+    required this.headers,
+    required this.rows,
+    required this.flexes,
+    required this.onTap,
+  });
+
+  final List<String> headers;
+  final List<List<Widget>> rows;
+  final List<int> flexes;
+  final List<VoidCallback?> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      if (constraints.maxWidth < 560) {
+        return Column(
+          children: rows.indexed
+              .map((item) => _DashboardCompactRow(
+                    headers: headers,
+                    cells: item.$2,
+                    onTap: onTap[item.$1],
+                  ))
+              .toList(growable: false),
+        );
+      }
+      return Column(
+        children: [
+          _DashboardTableRow(
+            cells:
+                headers.map((header) => Text(header)).toList(growable: false),
+            flexes: flexes,
+            header: true,
+          ),
+          ...rows.indexed.map((item) => _DashboardTableRow(
+                cells: item.$2,
+                flexes: flexes,
+                onTap: onTap[item.$1],
+              )),
+        ],
+      );
+    });
+  }
+}
+
+class _DashboardTableRow extends StatelessWidget {
+  const _DashboardTableRow({
+    required this.cells,
+    required this.flexes,
+    this.header = false,
+    this.onTap,
+  });
+
+  final List<Widget> cells;
+  final List<int> flexes;
+  final bool header;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final row = Container(
+      // color: header ? AppColors.canvas : AppColors.surface,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: header ? 12 : 13),
+      decoration: header
+          ? null
+          : const BoxDecoration(
+              color: AppColors.surface,
+              border: Border(bottom: BorderSide(color: AppColors.border)),
+            ),
+      child: Row(
+        children: cells.indexed
+            .map((item) => Expanded(
+                  flex: flexes[item.$1],
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Align(
+                      alignment: item.$1 == 0
+                          ? Alignment.centerLeft
+                          : Alignment.centerRight,
+                      child: item.$2,
+                    ),
+                  ),
+                ))
+            .toList(growable: false),
+      ),
+    );
+    if (onTap == null) return row;
+    return InkWell(onTap: onTap, child: row);
+  }
+}
+
+class _DashboardCompactRow extends StatelessWidget {
+  const _DashboardCompactRow({
+    required this.headers,
+    required this.cells,
+    required this.onTap,
+  });
+
+  final List<String> headers;
+  final List<Widget> cells;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final row = Container(
+      padding: const EdgeInsets.fromLTRB(16, 13, 16, 14),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          cells.first,
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 14,
+            runSpacing: 5,
+            children: cells.indexed.skip(1).map((item) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('${headers[item.$1]}: ',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: AppColors.muted,
+                          )),
+                  Flexible(child: item.$2),
+                ],
+              );
+            }).toList(growable: false),
+          ),
+        ],
+      ),
+    );
+    if (onTap == null) return row;
+    return InkWell(onTap: onTap, child: row);
+  }
+}
+
 class _SourceTable extends StatelessWidget {
   const _SourceTable({required this.rows, required this.onPressed});
 
@@ -979,32 +1298,28 @@ class _SourceTable extends StatelessWidget {
     if (rows.isEmpty) {
       return const _InlineEmptyState(message: 'No source data in this view.');
     }
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        showCheckboxColumn: false,
-        columns: const [
-          DataColumn(label: Text('Source')),
-          DataColumn(label: Text('Volume')),
-          DataColumn(label: Text('Contact')),
-          DataColumn(label: Text('Resolved')),
-          DataColumn(label: Text('Post-contact')),
-        ],
-        rows: rows
-            .map((row) => DataRow(
-                  onSelectChanged:
-                      row.id == null ? null : (_) => onPressed(row.id),
-                  cells: [
-                    DataCell(Text(row.name,
-                        style: const TextStyle(fontWeight: FontWeight.w600))),
-                    DataCell(Text(row.volume)),
-                    DataCell(Text(row.contactRate)),
-                    DataCell(Text(row.resolvedConversion)),
-                    DataCell(Text(row.postContactRate)),
-                  ],
-                ))
-            .toList(),
-      ),
+    return _DashboardTable(
+      headers: const [
+        'Source',
+        'Volume',
+        'Contact',
+        'Resolved',
+        'Post-contact'
+      ],
+      flexes: const [25, 15, 20, 20, 20],
+      rows: rows
+          .map((row) => [
+                Text(row.name,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(row.volume),
+                Text(row.contactRate),
+                Text(row.resolvedConversion),
+                Text(row.postContactRate),
+              ])
+          .toList(growable: false),
+      onTap: rows
+          .map((row) => row.id == null ? null : () => onPressed(row.id))
+          .toList(growable: false),
     );
   }
 }
@@ -1020,31 +1335,26 @@ class _VehicleTable extends StatelessWidget {
     if (rows.isEmpty) {
       return const _InlineEmptyState(message: 'No vehicle data in this view.');
     }
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        showCheckboxColumn: false,
-        columns: const [
-          DataColumn(label: Text('Model')),
-          DataColumn(label: Text('Demand')),
-          DataColumn(label: Text('Conversion')),
-          DataColumn(label: Text('Value share')),
-          DataColumn(label: Text('Delivered value')),
-        ],
-        rows: rows
-            .map((row) => DataRow(
-                  onSelectChanged: (_) => onPressed(row.id),
-                  cells: [
-                    DataCell(Text(row.name,
-                        style: const TextStyle(fontWeight: FontWeight.w600))),
-                    DataCell(Text(row.demandShare)),
-                    DataCell(Text(row.conversion)),
-                    DataCell(Text(row.deliveredValueShare)),
-                    DataCell(Text(row.deliveredValue)),
-                  ],
-                ))
-            .toList(),
-      ),
+    return _DashboardTable(
+      headers: const [
+        'Model',
+        'Demand',
+        'Conversion',
+        'Value share',
+        'Delivered value'
+      ],
+      flexes: const [27, 17, 19, 18, 19],
+      rows: rows
+          .map((row) => [
+                Text(row.name,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(row.demandShare),
+                Text(row.conversion),
+                Text(row.deliveredValueShare),
+                Text(row.deliveredValue),
+              ])
+          .toList(growable: false),
+      onTap: rows.map((row) => () => onPressed(row.id)).toList(growable: false),
     );
   }
 }
@@ -1060,54 +1370,57 @@ class _CohortTable extends StatelessWidget {
       return const _InlineEmptyState(
           message: 'No leads received in this period.');
     }
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columns: const [
-          DataColumn(label: Text('Month')),
-          DataColumn(label: Text('Leads')),
-          DataColumn(label: Text('Delivered')),
-          DataColumn(label: Text('Lost')),
-          DataColumn(label: Text('Active')),
-          DataColumn(label: Text('Conversion')),
-        ],
-        rows: rows
-            .map((row) => DataRow(cells: [
-                  DataCell(Row(
-                    children: [
-                      Text(row.month,
+    return _DashboardTable(
+      headers: const [
+        'Month',
+        'Leads',
+        'Delivered',
+        'Lost',
+        'Active',
+        'Conversion'
+      ],
+      flexes: const [30, 14, 14, 12, 12, 18],
+      rows: rows
+          .map((row) => [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(row.month,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 3),
-                        decoration: BoxDecoration(
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: row.isMature
+                            ? AppColors.positiveSoft
+                            : AppColors.warningSoft,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        row.isMature ? 'Mature' : 'Immature',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
                           color: row.isMature
-                              ? AppColors.positiveSoft
-                              : AppColors.warningSoft,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          row.isMature ? 'Mature' : 'Immature',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: row.isMature
-                                ? AppColors.positive
-                                : AppColors.warning,
-                          ),
+                              ? AppColors.positive
+                              : AppColors.warning,
                         ),
                       ),
-                    ],
-                  )),
-                  DataCell(Text('${row.volume}')),
-                  DataCell(Text('${row.delivered}')),
-                  DataCell(Text('${row.lost}')),
-                  DataCell(Text('${row.active}')),
-                  DataCell(Text(row.conversion)),
-                ]))
-            .toList(),
-      ),
+                    ),
+                  ],
+                ),
+                Text('${row.volume}'),
+                Text('${row.delivered}'),
+                Text('${row.lost}'),
+                Text('${row.active}'),
+                Text(row.conversion),
+              ])
+          .toList(growable: false),
+      onTap: rows.map((_) => null).toList(growable: false),
     );
   }
 }
