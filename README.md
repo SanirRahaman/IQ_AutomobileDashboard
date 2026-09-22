@@ -4,7 +4,7 @@ A Flutter Web dashboard that turns a supplied dealership dataset into sales perf
 
 **Repository:** [SanirRahaman/IQ_AutomobileDashboard](https://github.com/SanirRahaman/IQ_AutomobileDashboard)
 
-**Live website:** Production deployment pending account setup and verification.
+**Live website:** [iq-automobile-dashboard.vercel.app](https://iq-automobile-dashboard.vercel.app)
 
 ## Features
 
