@@ -102,7 +102,7 @@ Import this GitHub repository into Vercel, choose **Other** as the framework, an
 
 The build script downloads Flutter 3.24.4, installs locked dependencies, runs the analyzer and creates the release web build. Build artifacts are generated on Vercel, not stored in GitHub.
 
-With the GitHub integration connected and **main** selected as the production branch, pushes to `main` trigger production deployments. Other branches can create preview deployments under Vercel's project settings. The connection and production URL must be verified in the Vercel project; configuration files alone do not establish the account integration.
+The Vercel project **sanir1/iq-automobile-dashboard** is connected to this GitHub repository with **main** as its production branch. Pushes to `main` trigger production deployments. Other branches can create preview deployments under Vercel's project settings. The production site has been checked for Flutter startup, static assets and branch-route refresh with retained date filters.
 
 For CLI deployment after installing the official Vercel CLI and signing in:
 
