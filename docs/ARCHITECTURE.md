@@ -1,5 +1,16 @@
 # Architecture
 
+The `/explore` route adds a question-led investigation view without another router
+or data store. `AnalysisController.explore` prepares dimension and date scopes;
+`analytics/services/performance_explorer.dart` calculates reusable typed comparison
+rows and monthly series using the existing engine. `exploration_presenter.dart`
+owns display labels and definitions; `exploration_page.dart` owns controls and
+native Flutter chart drawing. No new chart dependency is required.
+
+`application/analysis/evidence_order.dart` sorts record positions, preserving the
+identity of repeated delivery events. The existing evidence dialog and CSV export
+consume that order. Business calculations stay out of chart widgets.
+
 ## Scope
 
 `yoyotaDealers` is a Flutter Web decision-support application. The Dart package is named `yoyota_dealers` because Dart package identifiers cannot contain uppercase letters.
@@ -53,15 +64,26 @@ The primary dashboard is a responsive Flutter presentation over `AnalysisResults
 
 The page follows this information order:
 
-1. business pulse;
-2. generated attention findings;
-3. sales journey;
-4. branch diagnostics;
-5. source and vehicle diagnostics;
-6. creation cohorts;
-7. pipeline and delivery health.
+1. visible analysis scope and business pulse;
+2. ranked management priorities;
+3. target and operational health;
+4. management gates, with the full journey on demand;
+5. branch diagnostics;
+6. source and vehicle diagnostics;
+7. creation cohorts.
 
-Desktop uses multi-column metric and insight layouts. Tablet progressively reduces columns, while narrow widths stack panels and keep wide diagnostic tables horizontally scrollable. Generated insight and journey actions open the exact scoped supporting records. Branch rows navigate to route-backed diagnostics rather than changing presentation-only state.
+Desktop uses multi-column metric and insight layouts, then full-width diagnostic
+tables where comparison benefits from horizontal space. Tablet progressively reduces
+columns, while narrow widths stack panels and switch suitable tables to compact rows.
+Generated insight, KPI, gate, journey, and operational actions open the exact scoped
+supporting records. Branch rows navigate to route-backed diagnostics rather than
+changing presentation-only state.
+
+`DashboardPresenter` also owns display context such as scope summaries, KPI supporting
+facts, network deltas, stage speed labels, and affected-value labels. These values are
+derived from typed analytics outputs, never recalculated in widgets. Branch and
+representative count/value comparisons use peer medians; resolved conversion retains
+the appropriate weighted network or branch benchmark.
 
 `YoyotaDealersApp` owns repository loading, loading/error states, and root browser routing. It resolves `/`, `/branch/:id`, `/rep/:id`, `/pipeline`, and `/delivery` on both initial load and in-app navigation. `DashboardPage` surfaces structured validation warnings, filtered no-results state, and section-level empty states. No finding text or business conclusion is embedded in the dashboard; all findings come from `DeterministicInsightEngine`.
 
@@ -131,7 +153,12 @@ are discarded; unknown detail IDs render not-found content.
 
 `ManagementPerformanceService` supplies target and delivery-period results to the
 existing `AnalysisResults`. No widgets calculate target ratios or KPI denominators.
-The dashboard puts the compact scorecard, target panel, and top three findings first;
-remaining findings expand on request. Definitions move to tooltips and dialogs.
+The dashboard puts the compact scorecard and top three findings first, followed by a
+compact target/operations row; remaining findings expand on request. Definitions move
+to tooltips and dialogs.
 `FollowUpCsv` is a pure Dart export builder; a conditional platform adapter handles
 browser download only. Representative table links use IDs rather than display names.
+
+The application theme is the small UI-kit boundary for semantic colours, spacing,
+radii, typography, cards, buttons, chips, tables, tooltips, and dialogs. Feature
+widgets reuse these primitives instead of introducing local visual languages.

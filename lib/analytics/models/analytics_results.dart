@@ -44,6 +44,8 @@ final class FunnelStageResult {
     required this.progressionRate,
     required this.leakageCount,
     required this.leakageRate,
+    required this.leakageValue,
+    required this.leakedLeadIds,
     required this.averageTransitionDuration,
     required this.medianTransitionDuration,
   });
@@ -54,6 +56,8 @@ final class FunnelStageResult {
   final double? progressionRate;
   final int leakageCount;
   final double? leakageRate;
+  final num leakageValue;
+  final List<String> leakedLeadIds;
   final Duration? averageTransitionDuration;
   final Duration? medianTransitionDuration;
 }
@@ -68,6 +72,7 @@ final class ManagementGateResult {
     required this.conversion,
     required this.lostBeforeGateCount,
     required this.lostBeforeGateValue,
+    required this.lostBeforeGateLeadIds,
   });
 
   final ManagementGate gate;
@@ -76,6 +81,7 @@ final class ManagementGateResult {
   final double? conversion;
   final int lostBeforeGateCount;
   final num lostBeforeGateValue;
+  final List<String> lostBeforeGateLeadIds;
 }
 
 final class PipelineAgeingSummary {
@@ -142,6 +148,8 @@ final class BranchAnalytics {
     required this.workloadPerSalesOfficer,
     required this.lostReasons,
     required this.pipelineAgeing,
+    required this.staleOpportunityValue,
+    required this.staleOpportunityShare,
     required this.deliveryPerformance,
   });
 
@@ -151,6 +159,8 @@ final class BranchAnalytics {
   final double? workloadPerSalesOfficer;
   final Map<String?, int> lostReasons;
   final PipelineAgeingSummary pipelineAgeing;
+  final num staleOpportunityValue;
+  final double? staleOpportunityShare;
   final DeliveryStats deliveryPerformance;
 }
 

@@ -32,6 +32,22 @@ void main() {
     c.reset();
     expect(r.currentConfiguration.toString(), '/');
   });
+  test('exploration page restores its filters and retains the route on reset',
+      () async {
+    r.go('/explore');
+    c.setBranch('B1');
+    c.setVehicleModel('Model A');
+    final uri = r.currentConfiguration;
+    expect(uri.path, '/explore');
+    final fresh = AnalysisController(dataset: c.dataset);
+    final router = AnalysisRouter(fresh);
+    await router.setNewRoutePath(uri);
+    expect(fresh.filters, c.filters);
+    fresh.reset();
+    expect(router.currentConfiguration.toString(), '/explore');
+    router.dispose();
+    fresh.dispose();
+  });
   test(
       'browser route restoration and back/forward do not feed back or lose scope',
       () async {

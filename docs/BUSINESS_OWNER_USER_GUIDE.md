@@ -18,11 +18,12 @@ records supplied to it; it does not update customer records or contact customers
 1. **Check “Data as of.”** This tells you how recent the information is.
 2. **Choose the period** you want to review, such as one month.
 3. **Leave “All branches” selected** to see the overall business first.
-4. **Read the six summary cards** near the top.
-5. **Look at “Deliveries vs target”** to see the gap against the supplied targets.
-6. **Read “What needs attention.”** Open the supporting records for a finding you want to investigate.
-7. **Choose a branch and then a representative** if you need to understand who should follow up.
-8. **Download a follow-up list** when you want to take the open opportunities into a team discussion.
+4. **Read the six summary cards** near the top and the context directly below each value.
+5. **Read “What needs attention.”** Compare its metric with the shown benchmark, then open the exact supporting records.
+6. **Check deliveries vs target and operational health** for target gaps, stale value, and delivery timing.
+7. **Use the management gates** to see whether losses concentrate before contact, test drive, or close; open the full journey only when you need stage detail.
+8. **Choose a branch and then a representative** if you need to understand who should follow up.
+9. **Download a follow-up list** when you want to take the open opportunities into a team discussion.
 
 You can return to the starting view with **Reset**.
 
@@ -72,7 +73,8 @@ use **Reset** when you want to clear all filters.
 Use **More filters** on the dashboard, or **Filters** on the operational pages,
 to narrow results by options such as lead source, vehicle model or lead status.
 
-Filters work together. For example, a branch plus a vehicle model shows only matching
+Filters work together. The complete active scope is written below the selected period,
+including secondary filters. For example, a branch plus a vehicle model shows only matching
 records for that branch and model. A very narrow selection may produce no records.
 That does not necessarily mean there is a problem with the website.
 
@@ -114,9 +116,10 @@ leads, active opportunities and how long those opportunities have been open.
 A dash means there is not enough applicable information to calculate the figure;
 it does not mean zero performance.
 
-### Active opportunities
+### Active opportunity value
 
-Potential sales that have not been delivered or lost. These might be new enquiries,
+The summed deal value on potential sales that have not been delivered or lost. The
+number below it gives the count of active opportunities. These might be new enquiries,
 contacted customers, test drives, negotiations or placed orders awaiting completion.
 
 An active opportunity is **not automatically a lost sale**.
@@ -163,7 +166,8 @@ with the previous month. This shows the change in recorded output, not the cause
 
 ## 6. Use “What needs attention”
 
-Each finding gives you an observation, a suggested next step and supporting records.
+Each finding shows its observed metric, benchmark when applicable, affected records
+and value, business meaning, suggested next step, and supporting records.
 A practical way to use it is:
 
 1. Read what was observed.
@@ -331,3 +335,72 @@ information. The website is not a live feed of today's dealership activity.
 You do not need the developer handbook for normal use. The main habit is simple:
 check the date and filters, inspect the evidence, and agree a clear next action with
 the team.
+
+## 14. Answer a specific question with Explore performance
+
+Open **Explore performance** below the overview cards. Your branch, representative,
+source, model, status and date filters stay applied. Use **Filters** on this page
+to change them. Data filters stay in the URL; the selected measure, tab and sort
+order are temporary presentation choices and reset after a refresh.
+
+### “Which car sold the most? Which sold the least?”
+
+1. Choose **Comparisons → Vehicle models → Delivered vehicles**.
+2. Choose **Highest first** or **Lowest first**. Choose **All results** to see every model.
+3. Click a model's bar to inspect its delivery records.
+
+Sales counts use delivery dates. A model with zero deliveries has no delivery list.
+To ask about value instead, select **Delivered deal value**. Value is not profit.
+
+### “Which branch or salesperson performed best for a particular vehicle?”
+
+1. Open **Filters** and choose the vehicle model and period.
+2. Choose **Branches** or **Representatives** in Comparisons.
+3. Choose the measure you mean: deliveries, delivered value, or resolved conversion.
+4. For rates, read the eligible/resolved lead count and any immature-cohort warning.
+
+You can use the same steps with a lead-source filter. Clear a branch filter to
+compare representatives across the network. There is no unexplained “best overall” score.
+
+### “Compare two branches, models, sources or representatives.”
+
+1. Choose the group and measure.
+2. Enable **Compare two**, then select **A** and **B**.
+3. Switch measures to check demand, value, conversion, inactivity or delivery speed.
+4. Open the supporting records for either group.
+
+Both groups use the same filters and period. Higher is not always better; fewer
+delivery days or less stale value may be preferable.
+
+### “Are sales, enquiries or conversion changing over time?”
+
+1. Choose **Monthly trends**.
+2. Select delivered vehicles, lead demand, delivered deal value, resolved conversion,
+   or median delivery days.
+3. Hover or select a point, or use **Selected month** to see its exact figure.
+4. Read the previous-month change and open **View month records**.
+
+Hollow points warn about partial periods or immature conversion cohorts. A gap
+means the measure is unavailable. Leads/conversion use the month leads arrived;
+deliveries use the month delivery occurred. Select a range covering both months to
+see their change. Changes are withheld when the periods are not comparable.
+
+### “Which opportunities are most valuable, inactive or overdue?”
+
+1. Choose **Follow-up lists** and open active, stale or overdue opportunities.
+2. In the dialog choose **Highest value first**, **Longest inactive (active)** or
+   **Most overdue (active)**.
+3. Select a customer to read the timeline, then download a follow-up CSV.
+
+Downloads keep the chosen order. “Oldest lead” means time since the lead arrived;
+“longest inactive” means time since its last recorded activity. Those are different.
+Delivery lists also offer longest/shortest delivery sorting.
+
+### “What was our stale pipeline last month? How much profit did we make?”
+
+These are not supported by this view. A past date filter does not rewind the
+pipeline: active status and inactivity still use **Data as of**. Profit, customer
+satisfaction, marketing ROI and predictions need additional data or methods.
+Target reporting currently covers supplied branch-month delivery-unit targets;
+it does not evaluate revenue targets. Read **What this data can and cannot tell you**
+on the exploration page when unsure.

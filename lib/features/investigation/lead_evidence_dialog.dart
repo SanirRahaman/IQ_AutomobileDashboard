@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../analytics/models/analytical_lead.dart';
 import '../../application/analysis/analysis_controller.dart';
+import '../../application/analysis/evidence_order.dart';
 import '../../app/app_theme.dart';
 import '../../data/models/dealership_models.dart';
 import '../dashboard/dashboard_view_data.dart';
@@ -67,6 +68,7 @@ class _EvidenceListDialog extends StatefulWidget {
 class _EvidenceListDialogState extends State<_EvidenceListDialog> {
   int? _selectedIndex;
   int _groupIndex = 0;
+  EvidenceOrder _order = EvidenceOrder.original;
 
   Map<String, AnalyticalLead> get _records => {
         for (final lead in widget.controller.results.leadScope.leads)
@@ -90,12 +92,21 @@ class _EvidenceListDialogState extends State<_EvidenceListDialog> {
   @override
   Widget build(BuildContext context) {
     final records = _records;
-    final ids = widget.groups.isEmpty
+    final originalIds = widget.groups.isEmpty
         ? widget.leadIds
         : widget.groups.values.elementAt(_groupIndex);
+    final positions = orderedEvidence(
+        ids: originalIds,
+        records: records,
+        order: _order,
+        deliveries: widget.deliveries);
+    final ids = positions.map((i) => originalIds[i]).toList();
+    final deliveries = widget.deliveries == null
+        ? null
+        : positions.map((i) => widget.deliveries![i]).toList();
     final selectedId = _selectedIndex == null ? null : ids[_selectedIndex!];
     final selectedDelivery =
-        _selectedIndex == null ? null : widget.deliveries?[_selectedIndex!];
+        _selectedIndex == null ? null : deliveries?[_selectedIndex!];
     final branchName = widget.controller.dataset.branches
         .where((b) => b.id == widget.controller.filters.branchId)
         .map((b) => b.name)
@@ -106,18 +117,20 @@ class _EvidenceListDialogState extends State<_EvidenceListDialog> {
         dataset: widget.controller.dataset,
         scopedRecords: records.values,
         requestedIds: ids,
+        preserveOrder: true,
         label: exportLabel,
         reason: widget.inclusionReason ?? widget.footer,
         reasons: widget.inclusionReasons);
     final allCsv = widget.deliveries != null
         ? exporter.createDeliveries(
             dataset: widget.controller.dataset,
-            deliveries: widget.deliveries!,
+            deliveries: deliveries!,
             label: exportLabel)
         : exporter.create(
             dataset: widget.controller.dataset,
             scopedRecords: records.values,
             requestedIds: ids,
+            preserveOrder: true,
             label: exportLabel,
             activeOnly: false,
             reason: widget.inclusionReason ?? widget.footer,
@@ -164,19 +177,83 @@ class _EvidenceListDialogState extends State<_EvidenceListDialog> {
                 ))),
             Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-                child: Wrap(spacing: 8, runSpacing: 8, children: [
-                  if (activeCsv.count > 0 && widget.deliveries == null)
-                    FilledButton.icon(
-                        key: const Key('export-follow-up'),
-                        onPressed: () => _save(activeCsv),
-                        icon: const Icon(Icons.download, size: 18),
-                        label: Text('Download follow-up (${activeCsv.count})')),
-                  OutlinedButton.icon(
-                      key: const Key('export-records'),
-                      onPressed: allCsv.count == 0 ? null : () => _save(allCsv),
-                      icon: const Icon(Icons.download, size: 18),
-                      label: Text('All ${allCsv.count} records · CSV')),
-                ])),
+                child: LayoutBuilder(builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 600;
+                  return Wrap(spacing: 8, runSpacing: 8, children: [
+                    SizedBox(
+                        width: compact ? 182 : 230,
+                        child: DropdownButtonFormField<EvidenceOrder>(
+                          key: const Key('evidence-sort'),
+                          value: _order,
+                          isExpanded: true,
+                          decoration:
+                              const InputDecoration(labelText: 'Sort records'),
+                          items: EvidenceOrder.values
+                              .where((order) =>
+                                  widget.deliveries != null ||
+                                  (order != EvidenceOrder.longestDelivery &&
+                                      order != EvidenceOrder.shortestDelivery))
+                              .map((order) => DropdownMenuItem(
+                                  value: order,
+                                  child: Text(
+                                      switch (order) {
+                                        EvidenceOrder.original =>
+                                          'Original order',
+                                        EvidenceOrder.highestValue =>
+                                          'Highest value first',
+                                        EvidenceOrder.lowestValue =>
+                                          'Lowest value first',
+                                        EvidenceOrder.inactivity =>
+                                          'Longest inactive (active)',
+                                        EvidenceOrder.overdue =>
+                                          'Most overdue (active)',
+                                        EvidenceOrder.oldest =>
+                                          'Oldest lead first',
+                                        EvidenceOrder.longestDelivery =>
+                                          'Longest delivery first',
+                                        EvidenceOrder.shortestDelivery =>
+                                          'Shortest delivery first',
+                                      },
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis)))
+                              .toList(),
+                          onChanged: (order) => setState(() {
+                            _order = order!;
+                            _selectedIndex = null;
+                          }),
+                        )),
+                    if (activeCsv.count > 0 && widget.deliveries == null)
+                      compact
+                          ? IconButton.filled(
+                              key: const Key('export-follow-up'),
+                              tooltip:
+                                  'Download follow-up (${activeCsv.count})',
+                              onPressed: () => _save(activeCsv),
+                              icon: const Icon(Icons.playlist_add_check),
+                            )
+                          : FilledButton.icon(
+                              key: const Key('export-follow-up'),
+                              onPressed: () => _save(activeCsv),
+                              icon: const Icon(Icons.download, size: 18),
+                              label: Text(
+                                  'Download follow-up (${activeCsv.count})')),
+                    compact
+                        ? IconButton.outlined(
+                            key: const Key('export-records'),
+                            tooltip:
+                                'Download all ${allCsv.count} records · CSV',
+                            onPressed:
+                                allCsv.count == 0 ? null : () => _save(allCsv),
+                            icon: const Icon(Icons.download),
+                          )
+                        : OutlinedButton.icon(
+                            key: const Key('export-records'),
+                            onPressed:
+                                allCsv.count == 0 ? null : () => _save(allCsv),
+                            icon: const Icon(Icons.download, size: 18),
+                            label: Text('All ${allCsv.count} records · CSV')),
+                  ]);
+                })),
             if (widget.groups.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
@@ -197,9 +274,10 @@ class _EvidenceListDialogState extends State<_EvidenceListDialog> {
               child: LayoutBuilder(builder: (context, constraints) {
                 final split = constraints.maxWidth >= 760;
                 final list = _EvidenceRecordList(
+                  key: ValueKey('evidence-list-$_groupIndex-${_order.name}'),
                   leadIds: ids,
                   records: records,
-                  deliveries: widget.deliveries,
+                  deliveries: deliveries,
                   selectedIndex: _selectedIndex,
                   onSelected: (index) => setState(() => _selectedIndex = index),
                 );
@@ -272,6 +350,7 @@ class _EvidenceListDialogState extends State<_EvidenceListDialog> {
 
 class _EvidenceRecordList extends StatelessWidget {
   const _EvidenceRecordList({
+    super.key,
     required this.leadIds,
     required this.records,
     required this.selectedIndex,

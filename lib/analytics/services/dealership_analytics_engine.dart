@@ -55,6 +55,8 @@ final class DealershipAnalyticsEngine {
             next == null ? null : _rate(progressed.length, reached.length),
         leakageCount: leaked.length,
         leakageRate: _rate(leaked.length, reached.length),
+        leakageValue: _sumValue(leaked),
+        leakedLeadIds: leaked.map((lead) => lead.id).toList(growable: false),
         averageTransitionDuration: _averageDuration(durations),
         medianTransitionDuration: _medianDuration(durations),
       );
@@ -109,6 +111,12 @@ final class DealershipAnalyticsEngine {
           .map((lead) => deliveryByLead[lead.id])
           .whereType<Delivery>()
           .toList();
+      final active = group.where((lead) => lead.isActive).toList();
+      final stale = active.where((lead) {
+        final band = _ageingBand(lead.daysSinceLastActivity);
+        return band == PipelineAgeingBand.stale ||
+            band == PipelineAgeingBand.severelyStale;
+      }).toList();
       return BranchAnalytics(
         branchId: branch.id,
         branchName: branch.name,
@@ -116,6 +124,8 @@ final class DealershipAnalyticsEngine {
         workloadPerSalesOfficer: _ratio(group.length, salesOfficers.length),
         lostReasons: _reasonCounts(group),
         pipelineAgeing: _pipelineSummary(group),
+        staleOpportunityValue: _sumValue(stale),
+        staleOpportunityShare: _ratio(_sumValue(stale), _sumValue(active)),
         deliveryPerformance: _deliveryStats(deliveries),
       );
     }).toList(growable: false);
@@ -381,6 +391,8 @@ final class DealershipAnalyticsEngine {
       conversion: _rate(reachedList.length, eligibleList.length),
       lostBeforeGateCount: lostList.length,
       lostBeforeGateValue: _sumValue(lostList),
+      lostBeforeGateLeadIds:
+          lostList.map((lead) => lead.id).toList(growable: false),
     );
   }
 

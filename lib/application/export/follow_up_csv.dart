@@ -63,15 +63,18 @@ class FollowUpCsv {
     required Iterable<String> requestedIds,
     required String label,
     bool activeOnly = true,
+    bool preserveOrder = false,
     String reason = '',
     Map<String, String> reasons = const {},
   }) {
     final ids = requestedIds.toSet();
-    final records = {
+    final byId = {
       for (final r in scopedRecords)
         if (ids.contains(r.id) && (!activeOnly || r.isActive)) r.id: r
-    }.values.toList()
-      ..sort((a, b) => a.id.compareTo(b.id));
+    };
+    final records = preserveOrder
+        ? ids.where(byId.containsKey).map((id) => byId[id]!).toList()
+        : (byId.values.toList()..sort((a, b) => a.id.compareTo(b.id)));
     final branches = {for (final b in dataset.branches) b.id: b.name};
     final reps = {for (final r in dataset.salesReps) r.id: r.name};
     final rows = <List<Object?>>[

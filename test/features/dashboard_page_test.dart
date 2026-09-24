@@ -33,7 +33,7 @@ void main() {
       expect(find.text('Leads created inside the selected period and filters.'),
           findsOneWidget);
       expect(find.byKey(const Key('export-records')), findsNothing);
-      await tester.tap(find.text('Close'));
+      await tester.tap(find.byKey(const Key('metric-help-close')));
       await tester.pumpAndSettle();
 
       Future<void> open(String kind) async {
@@ -56,7 +56,9 @@ void main() {
           find.byKey(const Key('evidence-lead-lost-b2')), 100,
           scrollable: find
               .descendant(
-                  of: find.descendant(of: find.byType(Dialog), matching: find.byType(ListView)), matching: find.byType(Scrollable))
+                  of: find.descendant(
+                      of: find.byType(Dialog), matching: find.byType(ListView)),
+                  matching: find.byType(Scrollable))
               .first);
       expect(find.byKey(const Key('evidence-lead-lost-b2')), findsOneWidget);
       await close();
@@ -165,6 +167,30 @@ void main() {
     expect(find.text('Variance -3'), findsOneWidget);
     expect(find.text('Excluded · missing, duplicate or invalid target'),
         findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('management gates progressively reveal the full journey',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 900));
+    final controller = AnalysisController(dataset: _dashboardDataset());
+    addTearDown(() {
+      controller.dispose();
+      tester.binding.setSurfaceSize(null);
+    });
+    await tester.pumpWidget(YoyotaDealersApp(controller: controller));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Management gates').first);
+    expect(find.text('Contact'), findsWidgets);
+    expect(find.text('Test drive'), findsWidgets);
+    expect(find.text('Close'), findsWidgets);
+
+    await tester.tap(find.text('Full journey'));
+    await tester.pumpAndSettle();
+    expect(find.text('Full sales journey'), findsOneWidget);
+    expect(find.textContaining('median to next stage'), findsWidgets);
+    expect(find.textContaining('affected value'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 

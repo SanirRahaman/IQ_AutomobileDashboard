@@ -9,6 +9,7 @@ import '../../data/validation/validation.dart';
 import '../../insights/services/deterministic_insight_engine.dart';
 import 'analysis_filters.dart';
 import '../../analytics/services/management_performance.dart';
+import '../../analytics/services/performance_explorer.dart';
 import 'analysis_results.dart';
 import 'analysis_route_codec.dart';
 import 'analysis_scope_service.dart';
@@ -66,6 +67,19 @@ final class AnalysisController extends ChangeNotifier {
   AnalysisResults get results => _results!;
   DealershipDataset get dataset => _dataset;
   ValidationReport get validationReport => _validationReport;
+
+  PerformanceExploration explore(ComparisonDimension dimension) =>
+      const PerformanceExplorer().calculate(
+        dimensionScope: _scopeService
+            .apply(_fullAnalyticalDataset, _filters.copyWith(dateRange: null))
+            .leadScope,
+        leadScope: results.leadScope,
+        deliveryScope: results.deliveryScope,
+        fullSource: _dataset,
+        dimension: dimension,
+        start: _filters.dateRange?.start,
+        end: _filters.dateRange?.end,
+      );
 
   List<SalesRep> get availableSalesReps => _dataset.salesReps
       .where((rep) =>

@@ -1,7 +1,6 @@
 import '../../analytics/models/analytical_lead.dart';
 import '../../analytics/models/analytics_results.dart';
 import '../../application/analysis/analysis_controller.dart';
-import '../../application/analysis/analysis_results.dart';
 import '../../insights/models/management_insight.dart';
 import '../dashboard/dashboard_view_data.dart';
 
@@ -88,19 +87,24 @@ final class InvestigationPresenter {
       title: branch.name,
       subtitle: '${branch.city} · Performance compared with all branches',
       kpis: [
-        _row('Lead volume', local.overview.totalLeads, all.overview.totalLeads),
+        _row('Lead volume', local.overview.totalLeads,
+            '${_median(all.branches.map((item) => item.metrics.leadVolume)).toStringAsFixed(0)} median branch'),
         _row(
             'Delivered / lost / active',
             '${local.overview.delivered} / ${local.overview.lost} / ${local.overview.activeLeads}',
-            '${all.overview.delivered} / ${all.overview.lost} / ${all.overview.activeLeads}'),
+            '${_median(all.branches.map((item) => item.metrics.delivered)).toStringAsFixed(0)} / ${_median(all.branches.map((item) => item.metrics.lost)).toStringAsFixed(0)} / ${_median(all.branches.map((item) => item.metrics.active)).toStringAsFixed(0)} median branch'),
         _rateRow('Resolved conversion', local.overview.resolvedConversion,
             all.overview.resolvedConversion),
         _valueRow(
             'Active opportunity value',
             local.overview.activeOpportunityValue,
-            all.overview.activeOpportunityValue),
-        _valueRow('Delivered deal value', local.overview.deliveredDealValue,
-            all.overview.deliveredDealValue),
+            _median(all.branches
+                .map((item) => item.metrics.activeOpportunityValue))),
+        _valueRow(
+            'Delivered deal value',
+            local.overview.deliveredDealValue,
+            _median(
+                all.branches.map((item) => item.metrics.deliveredDealValue))),
       ],
       funnel: [
         ..._gateRows(local.managementGates, all.managementGates),
@@ -168,6 +172,9 @@ final class InvestigationPresenter {
         .firstOrNull;
     final local = scoped.results;
     final benchmark = branch.results;
+    final activePeers = benchmark.salesReps
+        .where((item) => item.metrics.leadVolume > 0)
+        .toList(growable: false);
     final stale = local.pipeline
         .where(_isStale)
         .map((item) => item.leadId)
@@ -181,19 +188,23 @@ final class InvestigationPresenter {
       subtitle: '${branchName ?? rep.branchId} · Coaching and follow-up',
       kpis: [
         _row('Workload', local.overview.totalLeads,
-            benchmark.salesReps.isEmpty ? 0 : _averageWorkload(benchmark)),
+            '${_median(activePeers.map((item) => item.metrics.leadVolume)).toStringAsFixed(0)} median active rep'),
         _row(
             'Delivered / lost / active',
             '${local.overview.delivered} / ${local.overview.lost} / ${local.overview.activeLeads}',
-            '${benchmark.overview.delivered} / ${benchmark.overview.lost} / ${benchmark.overview.activeLeads} branch total'),
+            '${_median(activePeers.map((item) => item.metrics.delivered)).toStringAsFixed(0)} / ${_median(activePeers.map((item) => item.metrics.lost)).toStringAsFixed(0)} / ${_median(activePeers.map((item) => item.metrics.active)).toStringAsFixed(0)} median active rep'),
         _rateRow('Resolved conversion', local.overview.resolvedConversion,
             benchmark.overview.resolvedConversion),
         _valueRow(
             'Active opportunity value',
             local.overview.activeOpportunityValue,
-            benchmark.overview.activeOpportunityValue),
-        _valueRow('Delivered deal value', local.overview.deliveredDealValue,
-            benchmark.overview.deliveredDealValue),
+            _median(activePeers
+                .map((item) => item.metrics.activeOpportunityValue))),
+        _valueRow(
+            'Delivered deal value',
+            local.overview.deliveredDealValue,
+            _median(
+                activePeers.map((item) => item.metrics.deliveredDealValue))),
       ],
       funnel: [
         ..._gateRows(local.managementGates, benchmark.managementGates),
@@ -329,10 +340,14 @@ final class InvestigationPresenter {
         : '${_rate(item.leadShare)} network demand · ${_rate(item.resolvedConversion)} resolved';
   }
 
-  static int _averageWorkload(AnalysisResults result) =>
-      result.salesReps.isEmpty
-          ? 0
-          : (result.overview.totalLeads / result.salesReps.length).round();
+  static double _median(Iterable<num> values) {
+    final sorted = values.map((value) => value.toDouble()).toList()..sort();
+    if (sorted.isEmpty) return 0;
+    final middle = sorted.length ~/ 2;
+    return sorted.length.isOdd
+        ? sorted[middle]
+        : (sorted[middle - 1] + sorted[middle]) / 2;
+  }
 
   static String _rate(double? value) => DashboardPresenter.formatRate(value);
   static String _days(double? value) =>

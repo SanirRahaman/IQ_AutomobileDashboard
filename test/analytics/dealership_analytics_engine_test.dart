@@ -129,6 +129,8 @@ void main() {
     expect(newStage.progressionCount, 4);
     expect(newStage.leakageCount, 1);
     expect(newStage.progressionRate, 0.8);
+    expect(newStage.leakageValue, 50);
+    expect(newStage.leakedLeadIds, ['lost-new']);
     expect(contacted.reachedCount, 4);
     expect(contacted.progressionCount, 3);
     expect(contacted.leakageCount, 1);
@@ -143,6 +145,7 @@ void main() {
     expect(contact.lostBeforeGateValue, 50);
     expect(testDrive.lostBeforeGateCount, 1);
     expect(testDrive.lostBeforeGateValue, 70);
+    expect(testDrive.lostBeforeGateLeadIds, ['lost-contacted']);
   });
 
   test('branch and rep grouping retain context and zero-workload reps', () {
@@ -151,6 +154,8 @@ void main() {
     expect(branchOne.metrics.leadVolume, 4);
     expect(branchOne.workloadPerSalesOfficer, 4);
     expect(branchOne.deliveryPerformance.count, 1);
+    expect(branchOne.staleOpportunityValue, 170);
+    expect(branchOne.staleOpportunityShare, 1);
 
     final reps = engine.salesReps();
     final repTwo = reps.singleWhere((item) => item.repId == 'R2');

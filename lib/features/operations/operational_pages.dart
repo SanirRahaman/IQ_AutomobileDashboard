@@ -37,7 +37,7 @@ class _PipelinePageState extends State<PipelinePage> {
   }
 
   @override
-  Widget build(BuildContext context) => _OperationsScaffold(
+  Widget build(BuildContext context) => OperationsScaffold(
         controller: widget.controller,
         title: 'Active opportunities',
         question:
@@ -160,7 +160,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
   }
 
   @override
-  Widget build(BuildContext context) => _OperationsScaffold(
+  Widget build(BuildContext context) => OperationsScaffold(
         controller: widget.controller,
         title: 'Delivery performance',
         question:
@@ -227,8 +227,9 @@ class _DeliveryPageState extends State<DeliveryPage> {
       );
 }
 
-class _OperationsScaffold extends StatelessWidget {
-  const _OperationsScaffold({
+class OperationsScaffold extends StatelessWidget {
+  const OperationsScaffold({
+    super.key,
     required this.controller,
     required this.title,
     required this.question,
@@ -312,9 +313,12 @@ class _OperationalFilterBar extends StatelessWidget {
           const Icon(Icons.filter_alt_outlined, size: 19),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(controller.filters.isDefault
-                ? 'Network · all available dates'
-                : 'Selected filters applied'),
+            child: Text(
+              '${DashboardPresenter.formatScopeSummary(controller)} · '
+              '${DashboardPresenter.formatDate(controller.results.performance.start)} – '
+              '${DashboardPresenter.formatDate(controller.results.performance.end)}',
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           OutlinedButton.icon(
             key: const Key('operations-filters'),

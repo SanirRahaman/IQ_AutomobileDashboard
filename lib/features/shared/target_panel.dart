@@ -6,8 +6,13 @@ import '../../app/app_theme.dart';
 import '../dashboard/dashboard_view_data.dart';
 
 class TargetPanel extends StatelessWidget {
-  const TargetPanel({super.key, required this.controller});
+  const TargetPanel({
+    super.key,
+    required this.controller,
+    this.compact = false,
+  });
   final AnalysisController controller;
+  final bool compact;
   @override
   Widget build(BuildContext context) {
     final performance = controller.results.performance;
@@ -54,15 +59,22 @@ class TargetPanel extends StatelessWidget {
                           '${total.missingMonths} branch-month targets missing or ambiguous; excluded.',
                           style: const TextStyle(color: AppColors.warning)),
                     const SizedBox(height: 8),
-                    ...performance.branches.map((row) => _TargetRow(
-                        row: row,
-                        onPressed: () => AppNavigation.go(context,
-                            '/branch/${Uri.encodeComponent(row.branchId!)}',
-                            filters: controller.filters))),
-                    const SizedBox(height: 8),
+                    if (!compact) ...[
+                      ...performance.branches.map((row) => _TargetRow(
+                          row: row,
+                          onPressed: () => AppNavigation.go(context,
+                              '/branch/${Uri.encodeComponent(row.branchId!)}',
+                              filters: controller.filters))),
+                      const SizedBox(height: 8),
+                    ],
                     const Text(
                         'Supplied targets · confirm that the extract covers the same business.',
                         style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                    if (compact) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                          'Open Target attainment above for branch and month evidence.'),
+                    ],
                   ],
                   if (performance.comparison != null) ...[
                     const Divider(height: 22),

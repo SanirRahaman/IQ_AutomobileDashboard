@@ -8,12 +8,29 @@ abstract final class AppColors {
   static const surface = Colors.white;
   static const brand = Color(0xFFB42318);
   static const brandSoft = Color(0xFFFFE9E7);
+  static const critical = Color(0xFFB42318);
+  static const criticalSoft = Color(0xFFFEF3F2);
   static const positive = Color(0xFF067647);
   static const positiveSoft = Color(0xFFECFDF3);
   static const warning = Color(0xFFB54708);
   static const warningSoft = Color(0xFFFFFAEB);
   static const info = Color(0xFF175CD3);
   static const infoSoft = Color(0xFFEFF8FF);
+}
+
+abstract final class AppSpacing {
+  static const xs = 4.0;
+  static const sm = 8.0;
+  static const md = 12.0;
+  static const lg = 16.0;
+  static const xl = 24.0;
+  static const xxl = 32.0;
+}
+
+abstract final class AppRadii {
+  static const sm = 8.0;
+  static const md = 10.0;
+  static const lg = 14.0;
 }
 
 ThemeData buildAppTheme() {
@@ -75,7 +92,7 @@ ThemeData buildAppTheme() {
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(14)),
+        borderRadius: BorderRadius.all(Radius.circular(AppRadii.lg)),
         side: BorderSide(color: AppColors.border),
       ),
     ),
@@ -117,6 +134,41 @@ ThemeData buildAppTheme() {
       ),
       textStyle: TextStyle(color: Colors.white, fontSize: 12),
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    ),
+    dialogTheme: const DialogTheme(
+      backgroundColor: AppColors.surface,
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(AppRadii.lg)),
+      ),
+    ),
+    dataTableTheme: const DataTableThemeData(
+      headingRowColor: WidgetStatePropertyAll(AppColors.canvas),
+      dividerThickness: 1,
+      dataTextStyle: TextStyle(color: AppColors.ink, fontSize: 13),
+      headingTextStyle: TextStyle(
+        color: AppColors.muted,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: AppColors.canvas,
+      selectedColor: AppColors.infoSoft,
+      side: const BorderSide(color: AppColors.border),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.sm),
+      ),
+      labelStyle: const TextStyle(
+        color: AppColors.ink,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    listTileTheme: const ListTileThemeData(
+      iconColor: AppColors.muted,
+      textColor: AppColors.ink,
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 2),
     ),
   );
 }

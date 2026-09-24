@@ -210,6 +210,8 @@ class _InvestigationScaffold extends StatelessWidget {
                   ]),
                   Text(
                       '${DashboardPresenter.formatDate(scopedController.results.performance.start)} – ${DashboardPresenter.formatDate(scopedController.results.performance.end)}'),
+                  Text(DashboardPresenter.formatScopeSummary(scopedController),
+                      style: Theme.of(context).textTheme.bodyMedium),
                   Text(viewData.title,
                       style: Theme.of(context).textTheme.displaySmall),
                   const SizedBox(height: 6),

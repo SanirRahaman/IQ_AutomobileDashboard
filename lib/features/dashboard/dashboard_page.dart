@@ -24,6 +24,7 @@ class _DashboardPageState extends State<DashboardPage> {
   late DashboardViewData _viewData;
   late DateTime _firstDate;
   late DateTime _lastDate;
+  bool _showFullJourney = false;
 
   @override
   void initState() {
@@ -99,6 +100,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                               .textTheme
                                               .headlineSmall),
                                       Text(_viewData.scopeLabel),
+                                      Text(_viewData.scopeSummary,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium),
                                     ]),
                                 Tooltip(
                                     message:
@@ -115,18 +120,13 @@ class _DashboardPageState extends State<DashboardPage> {
                               onPressed: _showMetricRecords),
                           const SizedBox(height: 10),
                           Wrap(spacing: 8, runSpacing: 4, children: [
-                            TextButton.icon(
-                                onPressed: () =>
-                                    AppNavigation.go(context, '/pipeline'),
-                                icon: const Icon(Icons.playlist_add_check,
-                                    size: 18),
-                                label: const Text('Active opportunities')),
-                            TextButton.icon(
-                                onPressed: () =>
-                                    AppNavigation.go(context, '/delivery'),
-                                icon: const Icon(Icons.local_shipping_outlined,
-                                    size: 18),
-                                label: const Text('Delivery performance')),
+                            OutlinedButton.icon(
+                              key: const Key('open-explorer'),
+                              onPressed: () =>
+                                  AppNavigation.go(context, '/explore'),
+                              icon: const Icon(Icons.query_stats, size: 18),
+                              label: const Text('Explore performance'),
+                            ),
                             if (widget.controller.filters.branchId != null)
                               TextButton.icon(
                                   onPressed: () => AppNavigation.go(context,
@@ -149,50 +149,71 @@ class _DashboardPageState extends State<DashboardPage> {
                                   label: Text(
                                       '${widget.controller.validationReport.issues.length} data-quality notices')),
                           ]),
-                          const SizedBox(height: 8),
-                          _ResponsivePair(
-                            first: TargetPanel(controller: widget.controller),
-                            second: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                          const SizedBox(height: 14),
+                          const _SectionHeading(
+                            eyebrow: 'MANAGEMENT PRIORITIES',
+                            title: 'What needs attention',
+                            description:
+                                'Ranked findings show the observed gap, business exposure, evidence, and next investigation step.',
+                          ),
+                          const SizedBox(height: 12),
+                          _AttentionGrid(
+                              insights: _viewData.insights.take(3).toList(),
+                              onInvestigate: _showInsightEvidence),
+                          if (_viewData.insights.length > 3)
+                            ExpansionTile(
+                                tilePadding:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                title: Text(
+                                    '${_viewData.insights.length - 3} additional supported findings'),
                                 children: [
-                                  Text('What needs attention',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge),
-                                  const SizedBox(height: 8),
                                   _AttentionGrid(
                                       insights:
-                                          _viewData.insights.take(3).toList(),
-                                      onInvestigate: _showInsightEvidence),
-                                  if (_viewData.insights.length > 3)
-                                    ExpansionTile(
-                                        title: Text(
-                                            '${_viewData.insights.length - 3} more findings'),
-                                        children: [
-                                          _AttentionGrid(
-                                              insights: _viewData.insights
-                                                  .skip(3)
-                                                  .toList(),
-                                              onInvestigate:
-                                                  _showInsightEvidence)
-                                        ]),
+                                          _viewData.insights.skip(3).toList(),
+                                      onInvestigate: _showInsightEvidence)
                                 ]),
-                          ),
                           const SizedBox(height: 24),
+                          _ResponsivePair(
+                            first: TargetPanel(
+                                controller: widget.controller, compact: true),
+                            second: _OperationsPanel(
+                              data: _viewData.operations,
+                              onPipelinePressed: () =>
+                                  AppNavigation.go(context, '/pipeline'),
+                              onDeliveryPressed: () =>
+                                  AppNavigation.go(context, '/delivery'),
+                            ),
+                          ),
+                          const SizedBox(height: 30),
                           if (!_viewData.hasResults)
                             _NoResultsState(onReset: widget.controller.reset)
                           else ...[
-                            const _SectionHeading(
+                            _SectionHeading(
                               eyebrow: 'SALES JOURNEY',
-                              title: 'Where opportunities progress or leave',
-                              description:
-                                  'Follow leads from first contact to delivery. Active leads are not losses.',
+                              title: _showFullJourney
+                                  ? 'Full sales journey'
+                                  : 'Management gates',
+                              description: _showFullJourney
+                                  ? 'Detailed stage progression, speed, recorded losses, and affected opportunity value.'
+                                  : 'A concise executive view of Contact → Test drive → Close. Active leads are not losses.',
                             ),
                             const SizedBox(height: 14),
-                            _JourneyPanel(
-                              stages: _viewData.journey,
-                              onStagePressed: _showStageEvidence,
+                            _JourneyModeControl(
+                              showFullJourney: _showFullJourney,
+                              onChanged: (value) =>
+                                  setState(() => _showFullJourney = value),
                             ),
+                            const SizedBox(height: 10),
+                            if (_showFullJourney)
+                              _JourneyPanel(
+                                stages: _viewData.journey,
+                                onStagePressed: _showStageEvidence,
+                              )
+                            else
+                              _ManagementGatePanel(
+                                gates: _viewData.managementGates,
+                                onGatePressed: _showGateEvidence,
+                              ),
                             const SizedBox(height: 36),
                             const _SectionHeading(
                               eyebrow: 'BRANCH PERFORMANCE',
@@ -232,20 +253,11 @@ class _DashboardPageState extends State<DashboardPage> {
                               ),
                             ),
                             const SizedBox(height: 36),
-                            _ResponsivePair(
-                              first: _DiagnosticPanel(
-                                title: 'Conversion by lead month',
-                                subtitle:
-                                    'Grouped by when leads arrived. Recent groups may still be progressing.',
-                                child: _CohortTable(rows: _viewData.cohorts),
-                              ),
-                              second: _OperationsPanel(
-                                data: _viewData.operations,
-                                onPipelinePressed: () =>
-                                    AppNavigation.go(context, '/pipeline'),
-                                onDeliveryPressed: () =>
-                                    AppNavigation.go(context, '/delivery'),
-                              ),
+                            _DiagnosticPanel(
+                              title: 'Conversion by lead month',
+                              subtitle:
+                                  'Direction over time by lead-arrival month. Immature recent groups remain visibly qualified.',
+                              child: _CohortTable(rows: _viewData.cohorts),
                             ),
                           ],
                         ],
@@ -388,6 +400,19 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  void _showGateEvidence(ManagementGateViewData gate) {
+    _showEvidenceDialog(
+      title: 'Losses before ${gate.label}',
+      subtitle:
+          '${gate.losses} · ${gate.affectedValue} affected opportunity value',
+      ids: gate.affectedLeadIds,
+      footer:
+          'Review the supporting records to understand the recorded path. The dashboard does not infer the cause of the loss.',
+      inclusionReason:
+          'the lead was recorded as lost before reaching the ${gate.label.toLowerCase()} gate',
+    );
+  }
+
   void _showEvidenceDialog({
     required String title,
     required String subtitle,
@@ -421,7 +446,6 @@ class _ProductBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       color: AppColors.ink,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween, //todo check
         children: [
           Container(
             width: 30,
@@ -443,7 +467,7 @@ class _ProductBar extends StatelessWidget {
               letterSpacing: -0.2,
             ),
           ),
-          // const Spacer(),
+          const Spacer(),
           Flexible(
             child: Text(
               scopeLabel,
@@ -633,8 +657,8 @@ class _PulseGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      final columns = constraints.maxWidth >= 1180
-          ? 6
+      final columns = constraints.maxWidth >= 980
+          ? 3
           : constraints.maxWidth >= 660
               ? 3
               : constraints.maxWidth >= 320
@@ -690,6 +714,8 @@ class _PulseCard extends StatelessWidget {
                                           content: Text(metric.helper),
                                           actions: [
                                             TextButton(
+                                                key: const Key(
+                                                    'metric-help-close'),
                                                 onPressed: () =>
                                                     Navigator.pop(c),
                                                 child: const Text('Close'))
@@ -698,8 +724,16 @@ class _PulseCard extends StatelessWidget {
                     ]),
                     const SizedBox(height: 4),
                     Text(metric.value,
-                        style: Theme.of(context).textTheme.headlineSmall),
-                    const SizedBox(height: 8),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontSize: 25)),
+                    const SizedBox(height: 5),
+                    Text(metric.context,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium),
+                    const SizedBox(height: 7),
                     Text(
                         metric.kind == PulseMetricKind.target
                             ? 'View breakdown →'
@@ -730,17 +764,25 @@ class _AttentionGrid extends StatelessWidget {
       );
     }
     return LayoutBuilder(builder: (context, constraints) {
-      const columns = 1;
+      final columns = constraints.maxWidth >= 1100
+          ? 3
+          : constraints.maxWidth >= 720
+              ? 2
+              : 1;
       final width = (constraints.maxWidth - (columns - 1) * 14) / columns;
       return Wrap(
         spacing: 14,
         runSpacing: 14,
-        children: insights
-            .map((insight) => SizedBox(
-                  width: width,
+        children: insights.indexed
+            .map((item) => SizedBox(
+                  width: columns == 2 &&
+                          insights.length.isOdd &&
+                          item.$1 == insights.length - 1
+                      ? constraints.maxWidth
+                      : width,
                   child: _InsightCard(
-                    insight: insight,
-                    onPressed: () => onInvestigate(insight),
+                    insight: item.$2,
+                    onPressed: () => onInvestigate(item.$2),
                   ),
                 ))
             .toList(),
@@ -758,7 +800,7 @@ class _InsightCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, soft) = switch (insight.severity) {
-      InsightSeverity.critical => (AppColors.brand, AppColors.brandSoft),
+      InsightSeverity.critical => (AppColors.critical, AppColors.criticalSoft),
       InsightSeverity.warning => (AppColors.warning, AppColors.warningSoft),
       InsightSeverity.opportunity => (AppColors.info, AppColors.infoSoft),
       InsightSeverity.positive => (AppColors.positive, AppColors.positiveSoft),
@@ -791,7 +833,12 @@ class _InsightCard extends StatelessWidget {
               ]),
               const SizedBox(height: 6),
               Text(insight.finding),
-              const SizedBox(height: 6),
+              const SizedBox(height: 10),
+              _InsightMetricStrip(insight: insight),
+              const SizedBox(height: 9),
+              Text(insight.businessSignificance,
+                  style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: 7),
               Text('Next: ${insight.suggestedInvestigation}',
                   style: Theme.of(context)
                       .textTheme
@@ -805,6 +852,79 @@ class _InsightCard extends StatelessWidget {
             ])));
   }
 }
+
+class _InsightMetricStrip extends StatelessWidget {
+  const _InsightMetricStrip({required this.insight});
+
+  final ManagementInsight insight;
+
+  @override
+  Widget build(BuildContext context) {
+    final benchmark = insight.benchmark;
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.canvas,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
+              child: _MetricDatum(
+                  label: insight.observedMetric.label,
+                  value: _formatInsightMetric(insight.observedMetric.value,
+                      insight.observedMetric.unit))),
+          if (benchmark != null) ...[
+            const SizedBox(width: 12),
+            Expanded(
+                child: _MetricDatum(
+                    label: benchmark.label,
+                    value:
+                        _formatInsightMetric(benchmark.value, benchmark.unit))),
+          ],
+        ]),
+        const SizedBox(height: 8),
+        Wrap(spacing: 12, runSpacing: 4, children: [
+          Text('${insight.affectedLeadCount} records affected',
+              style: Theme.of(context).textTheme.labelMedium),
+          if (insight.affectedDealValue != null)
+            Text(
+                '${DashboardPresenter.formatValue(insight.affectedDealValue!)} affected value',
+                style: Theme.of(context).textTheme.labelMedium),
+        ]),
+      ]),
+    );
+  }
+}
+
+class _MetricDatum extends StatelessWidget {
+  const _MetricDatum({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.muted,
+                  )),
+          const SizedBox(height: 2),
+          Text(value, style: Theme.of(context).textTheme.titleMedium),
+        ],
+      );
+}
+
+String _formatInsightMetric(double value, MetricUnit unit) => switch (unit) {
+      MetricUnit.rate => '${(value * 100).toStringAsFixed(1)}%',
+      MetricUnit.days => '${value.toStringAsFixed(1)} days',
+      MetricUnit.value => DashboardPresenter.formatValue(value),
+      MetricUnit.count => DashboardPresenter.formatInteger(value),
+      MetricUnit.ratio => value.toStringAsFixed(2),
+    };
 
 class _JourneyPanel extends StatelessWidget {
   const _JourneyPanel({required this.stages, required this.onStagePressed});
@@ -856,6 +976,111 @@ class _JourneyPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class _JourneyModeControl extends StatelessWidget {
+  const _JourneyModeControl({
+    required this.showFullJourney,
+    required this.onChanged,
+  });
+
+  final bool showFullJourney;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Align(
+        alignment: Alignment.centerLeft,
+        child: SegmentedButton<bool>(
+          showSelectedIcon: false,
+          segments: const [
+            ButtonSegment(value: false, label: Text('Management gates')),
+            ButtonSegment(value: true, label: Text('Full journey')),
+          ],
+          selected: {showFullJourney},
+          onSelectionChanged: (value) => onChanged(value.single),
+        ),
+      );
+}
+
+class _ManagementGatePanel extends StatelessWidget {
+  const _ManagementGatePanel({
+    required this.gates,
+    required this.onGatePressed,
+  });
+
+  final List<ManagementGateViewData> gates;
+  final ValueChanged<ManagementGateViewData> onGatePressed;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        clipBehavior: Clip.antiAlias,
+        child: LayoutBuilder(builder: (context, constraints) {
+          final compact = constraints.maxWidth < 720;
+          final children = gates.indexed.map((item) {
+            final gate = item.$2;
+            final content = InkWell(
+              onTap: gate.affectedLeadIds.isEmpty
+                  ? null
+                  : () => onGatePressed(gate),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(gate.label,
+                        style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(height: 5),
+                    Text(gate.conversion,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontSize: 26)),
+                    Text(gate.reached,
+                        style: Theme.of(context).textTheme.bodyMedium),
+                    const SizedBox(height: 12),
+                    Text(gate.losses,
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: gate.affectedLeadIds.isEmpty
+                                      ? AppColors.muted
+                                      : AppColors.warning,
+                                )),
+                    Text('${gate.affectedValue} affected',
+                        style: Theme.of(context).textTheme.bodyMedium),
+                    if (gate.affectedLeadIds.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text('View supporting records →',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelMedium
+                              ?.copyWith(color: AppColors.info)),
+                    ],
+                  ],
+                ),
+              ),
+            );
+            if (compact) {
+              return Column(children: [
+                content,
+                if (item.$1 < gates.length - 1) const Divider(height: 1),
+              ]);
+            }
+            return Expanded(child: content);
+          }).toList(growable: false);
+          return compact
+              ? Column(children: children)
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var index = 0; index < children.length; index++) ...[
+                      children[index],
+                      if (index < children.length - 1)
+                        const VerticalDivider(width: 1),
+                    ],
+                  ],
+                );
+        }),
+      );
 }
 
 class _JourneyStage extends StatelessWidget {
@@ -911,6 +1136,8 @@ class _JourneyStage extends StatelessWidget {
           const SizedBox(height: 4),
           Text(stage.progression,
               style: Theme.of(context).textTheme.bodyMedium),
+          Text(stage.transitionSpeed,
+              style: Theme.of(context).textTheme.bodyMedium),
           Text(
             stage.leakage,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -919,6 +1146,8 @@ class _JourneyStage extends StatelessWidget {
                       : AppColors.warning,
                 ),
           ),
+          Text(stage.leakageValue,
+              style: Theme.of(context).textTheme.bodyMedium),
         ],
       );
 }
@@ -955,23 +1184,23 @@ class _BranchPanel extends StatelessWidget {
               color: AppColors.canvas,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
               child: const Row(children: [
-                Expanded(flex: 26, child: Text('Branch')),
+                Expanded(flex: 22, child: Text('Branch')),
                 Expanded(
-                    flex: 12, child: Text('Leads', textAlign: TextAlign.right)),
+                    flex: 10, child: Text('Leads', textAlign: TextAlign.right)),
                 Expanded(
                     flex: 20,
-                    child:
-                        Text('Resolved outcomes', textAlign: TextAlign.right)),
-                Expanded(
-                    flex: 15,
-                    child: Text('Conversion', textAlign: TextAlign.right)),
-                Expanded(
-                    flex: 15,
-                    child: Text('Active value', textAlign: TextAlign.right)),
+                    child: Text('Resolved conversion',
+                        textAlign: TextAlign.right)),
                 Expanded(
                     flex: 24,
-                    child:
-                        Text('Lowest progression', textAlign: TextAlign.right)),
+                    child: Text('Active / stale value',
+                        textAlign: TextAlign.right)),
+                Expanded(
+                    flex: 16,
+                    child: Text('Delivery', textAlign: TextAlign.right)),
+                Expanded(
+                    flex: 25,
+                    child: Text('Key diagnostic', textAlign: TextAlign.right)),
                 SizedBox(width: 22),
               ]),
             ),
@@ -1014,27 +1243,41 @@ class _BranchWideRowState extends State<_BranchWideRow> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Row(children: [
               Expanded(
-                  flex: 26,
+                  flex: 22,
                   child: Text(widget.branch.name,
                       style: const TextStyle(fontWeight: FontWeight.w600))),
               Expanded(
-                  flex: 12,
+                  flex: 10,
                   child: Text(widget.branch.leadVolume,
                       textAlign: TextAlign.right, style: textStyle)),
               Expanded(
                   flex: 20,
-                  child: Text(widget.branch.outcomes,
-                      textAlign: TextAlign.right, style: textStyle)),
-              Expanded(
-                  flex: 15,
-                  child: Text(widget.branch.conversion,
-                      textAlign: TextAlign.right, style: textStyle)),
-              Expanded(
-                  flex: 15,
-                  child: Text(widget.branch.activeValue,
-                      textAlign: TextAlign.right, style: textStyle)),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(widget.branch.conversion,
+                            textAlign: TextAlign.right,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(widget.branch.conversionDelta,
+                            textAlign: TextAlign.right, style: textStyle),
+                      ])),
               Expanded(
                   flex: 24,
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(widget.branch.activeValue,
+                            textAlign: TextAlign.right),
+                        Text('${widget.branch.staleValue} stale',
+                            textAlign: TextAlign.right, style: textStyle),
+                      ])),
+              Expanded(
+                  flex: 16,
+                  child: Text(widget.branch.deliveryHealth,
+                      textAlign: TextAlign.right, style: textStyle)),
+              Expanded(
+                  flex: 25,
                   child: Text(widget.branch.bottleneck,
                       textAlign: TextAlign.right,
                       overflow: TextOverflow.ellipsis,
@@ -1071,11 +1314,14 @@ class _BranchCompactRow extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 5),
                     Text(
-                        '${branch.leadVolume} leads · ${branch.outcomes} resolved · ${branch.conversion}',
+                        '${branch.leadVolume} leads · ${branch.conversion} · ${branch.conversionDelta}',
                         style: Theme.of(context).textTheme.bodyMedium),
                     const SizedBox(height: 3),
                     Text(
-                        'Active value ${branch.activeValue} · ${branch.bottleneck}',
+                        'Active ${branch.activeValue} · stale ${branch.staleValue}',
+                        style: Theme.of(context).textTheme.bodyMedium),
+                    Text(
+                        '${branch.deliveryHealth} delivery · ${branch.bottleneck}',
                         style: Theme.of(context).textTheme.bodyMedium),
                   ]),
             ),
@@ -1209,12 +1455,10 @@ class _DashboardTableRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final row = Container(
-      // color: header ? AppColors.canvas : AppColors.surface,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: header ? 12 : 13),
       decoration: header
           ? null
           : const BoxDecoration(
-              color: AppColors.surface,
               border: Border(bottom: BorderSide(color: AppColors.border)),
             ),
       child: Row(
@@ -1235,7 +1479,11 @@ class _DashboardTableRow extends StatelessWidget {
       ),
     );
     if (onTap == null) return row;
-    return InkWell(onTap: onTap, child: row);
+    return InkWell(
+      hoverColor: AppColors.infoSoft,
+      onTap: onTap,
+      child: row,
+    );
   }
 }
 
@@ -1255,7 +1503,6 @@ class _DashboardCompactRow extends StatelessWidget {
     final row = Container(
       padding: const EdgeInsets.fromLTRB(16, 13, 16, 14),
       decoration: const BoxDecoration(
-        color: AppColors.surface,
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Column(
@@ -1283,7 +1530,11 @@ class _DashboardCompactRow extends StatelessWidget {
       ),
     );
     if (onTap == null) return row;
-    return InkWell(onTap: onTap, child: row);
+    return InkWell(
+      hoverColor: AppColors.infoSoft,
+      onTap: onTap,
+      child: row,
+    );
   }
 }
 
@@ -1371,15 +1622,8 @@ class _CohortTable extends StatelessWidget {
           message: 'No leads received in this period.');
     }
     return _DashboardTable(
-      headers: const [
-        'Month',
-        'Leads',
-        'Delivered',
-        'Lost',
-        'Active',
-        'Conversion'
-      ],
-      flexes: const [30, 14, 14, 12, 12, 18],
+      headers: const ['Month', 'Leads', 'Outcome mix', 'Conversion'],
+      flexes: const [28, 12, 42, 18],
       rows: rows
           .map((row) => [
                 Row(
@@ -1414,14 +1658,52 @@ class _CohortTable extends StatelessWidget {
                   ],
                 ),
                 Text('${row.volume}'),
-                Text('${row.delivered}'),
-                Text('${row.lost}'),
-                Text('${row.active}'),
+                _CohortOutcomeBar(row: row),
                 Text(row.conversion),
               ])
           .toList(growable: false),
       onTap: rows.map((_) => null).toList(growable: false),
     );
+  }
+}
+
+class _CohortOutcomeBar extends StatelessWidget {
+  const _CohortOutcomeBar({required this.row});
+  final CohortViewData row;
+
+  @override
+  Widget build(BuildContext context) {
+    final represented = row.delivered + row.lost + row.active;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: SizedBox(
+          height: 7,
+          child: Row(children: [
+            if (row.delivered > 0)
+              Expanded(
+                  flex: row.delivered,
+                  child: Container(color: AppColors.positive)),
+            if (row.lost > 0)
+              Expanded(
+                  flex: row.lost, child: Container(color: AppColors.brand)),
+            if (row.active > 0)
+              Expanded(
+                  flex: row.active, child: Container(color: AppColors.info)),
+            if (represented == 0)
+              Expanded(child: Container(color: AppColors.border)),
+          ]),
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        '${row.delivered} delivered · ${row.lost} lost · ${row.active} active',
+        textAlign: TextAlign.right,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: AppColors.muted,
+            ),
+      ),
+    ]);
   }
 }
 

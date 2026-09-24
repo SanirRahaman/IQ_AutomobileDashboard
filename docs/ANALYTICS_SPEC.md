@@ -77,6 +77,8 @@ For each canonical stage:
 - progression count is the number that explicitly reached the next stage;
 - progression rate is progression divided by reached count;
 - leakage is a lost lead whose attributed exit stage is that stage;
+- leakage value is the sum of the affected lost leads' deal values;
+- leakage evidence retains the exact affected lead IDs;
 - average and median speed use only valid observed adjacent-stage durations.
 
 The terminal delivered stage has no progression rate or transition duration.
@@ -93,9 +95,22 @@ Close = reached order_placed
 
 Close deliberately means an accepted/placed order, not delivery; delivery is analyzed operationally. Contact conversion uses all leads as eligible, Test Drive uses contacted leads, and Close uses test-driven leads. Loss before Close combines losses attributed to test drive and negotiation.
 
+Each gate result retains exact IDs for leads lost before that gate. The management
+gate presentation may therefore open the same records used by its count and affected
+value instead of sending the user to a generic filtered page.
+
 ### Grouped performance
 
 Branch and representative results reuse the same overview and funnel definitions. Representative results retain branch ID and name, including representatives with zero workload. Branch workload is scoped lead count divided by the number of representatives typed as `sales_officer`; it is `null` if no sales officer exists.
+
+Branch pipeline context includes stale opportunity value and its share of total active
+opportunity value, using the same inactivity classification as the pipeline module.
+These fields describe active records needing review; they do not reclassify them as
+losses.
+
+In diagnostic presentation, rate metrics use the weighted network or branch rate as
+their benchmark. Count and value metrics use the median of comparable branches or
+active representatives, because a network total is not a meaningful peer benchmark.
 
 Source analytics keep these distinct:
 
@@ -277,3 +292,35 @@ representative, vehicle, source, current status, value without currency, key dat
 inactivity, snapshot date, and reason for review. Lead references permit record
 reconciliation. CSV text is quoted and formula-leading text is escaped for
 spreadsheet safety. Raw source records are never modified.
+
+## Performance explorer
+
+`PerformanceExplorer` reuses the canonical engine for creation-cohort outcomes,
+value profiles, management gates, pipeline bands and delivery durations. It groups
+the selected scope by vehicle model, branch, representative or source. Unattributed
+sources remain a distinct nullable group. Registered sales officers with no matching
+records may show zero counts; undefined rates stay unavailable and sort last.
+
+Delivery counts and delivered values use linked delivery events in the selected
+delivery-date range, including repeated events for one lead. Delivered value adds
+the linked lead's recorded deal value once per event, matching the existing scorecard.
+Other measures use leads created within the selected range. Average/median lead
+value includes all outcomes, not just successful sales. Rate evidence contains the
+denominator records, including lost records for resolved conversion and excluding
+active records. Every row shows its sample size; conversion groups containing
+immature creation months are labelled. Sorting is descriptive, not an overall
+performance rating or evidence of statistical significance.
+
+Monthly trends include zero-count months inside observed coverage. Missing rate or
+duration denominators produce gaps, not zeroes. Months clipped by the filter or
+observed extract boundaries are partial. The cohort maturity rule is unchanged.
+Previous-month changes require two complete observed months and, for conversion,
+two mature cohorts; rates change in percentage points. No history of active/stale
+pipeline value is inferred. Date-filtered active values remain snapshot values for
+the selected creation cohort, never a reconstruction of an earlier month-end.
+
+Evidence sorting uses positions to preserve repeated delivery records and their
+detail alignment. Value, lead age, active inactivity, active expected-close slippage
+and delivery-duration sorts are available. Undefined sort values follow supported
+ones; ties preserve original order. Dialog CSV exports preserve the displayed sort
+order while retaining scope intersection and active-only follow-up safeguards.

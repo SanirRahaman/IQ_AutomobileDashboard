@@ -6,6 +6,7 @@ import '../application/analysis/analysis_route_codec.dart';
 import '../features/dashboard/dashboard_page.dart';
 import '../features/investigation/investigation_page.dart';
 import '../features/operations/operational_pages.dart';
+import '../features/exploration/exploration_page.dart';
 
 class AnalysisRouteParser extends RouteInformationParser<Uri> {
   const AnalysisRouteParser();
@@ -90,6 +91,8 @@ class AnalysisRouter extends RouterDelegate<Uri>
     } else if (parts.length == 2 && parts.first == 'rep') {
       page =
           RepDetailPage(key: key, baseController: controller, repId: parts[1]);
+    } else if (_uri.path == '/explore') {
+      page = ExplorationPage(controller: controller);
     } else if (_uri.path == '/pipeline') {
       page = PipelinePage(controller: controller);
     } else if (_uri.path == '/delivery') {
