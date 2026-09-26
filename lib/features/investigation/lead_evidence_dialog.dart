@@ -226,6 +226,9 @@ class _EvidenceListDialogState extends State<_EvidenceListDialog> {
                       compact
                           ? IconButton.filled(
                               key: const Key('export-follow-up'),
+                              style: IconButton.styleFrom(
+                                  foregroundColor:
+                                      Theme.of(context).colorScheme.onPrimary),
                               tooltip:
                                   'Download follow-up (${activeCsv.count})',
                               onPressed: () => _save(activeCsv),
@@ -327,9 +330,9 @@ class _EvidenceListDialogState extends State<_EvidenceListDialog> {
             ),
             Container(
               padding: const EdgeInsets.all(18),
-              decoration: const BoxDecoration(
-                color: AppColors.canvas,
-                border: Border(top: BorderSide(color: AppColors.border)),
+              decoration: BoxDecoration(
+                color: context.colors.canvas,
+                border: Border(top: BorderSide(color: context.colors.border)),
               ),
               child: ConstrainedBox(
                   constraints: BoxConstraints(
@@ -383,10 +386,10 @@ class _EvidenceRecordList extends StatelessWidget {
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOut,
           decoration: BoxDecoration(
-            color: selected ? AppColors.infoSoft : AppColors.surface,
+            color: selected ? context.colors.infoSoft : context.colors.surface,
             borderRadius: BorderRadius.circular(10),
-            border:
-                Border.all(color: selected ? AppColors.info : AppColors.border),
+            border: Border.all(
+                color: selected ? context.colors.info : context.colors.border),
           ),
           child: ListTile(
             key: Key(delivery == null
@@ -408,7 +411,7 @@ class _EvidenceRecordList extends StatelessWidget {
                   : DashboardPresenter.formatValue(record.dealValue)),
               const SizedBox(width: 6),
               Icon(selected ? Icons.arrow_forward : Icons.chevron_right,
-                  color: selected ? AppColors.info : AppColors.muted),
+                  color: selected ? context.colors.info : context.colors.muted),
             ]),
             onTap: record == null ? null : () => onSelected(index),
           ),
@@ -426,8 +429,8 @@ class _EvidencePlaceholder extends StatelessWidget {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(32),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.touch_app_outlined,
-                size: 34, color: AppColors.muted),
+            Icon(Icons.touch_app_outlined,
+                size: 34, color: context.colors.muted),
             const SizedBox(height: 12),
             Text('Select a supporting record',
                 style: Theme.of(context).textTheme.titleMedium),
@@ -496,8 +499,8 @@ class _LeadEvidencePanel extends StatelessWidget {
       children: [
         Container(
           padding: const EdgeInsets.fromLTRB(20, 18, 12, 14),
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: AppColors.border)),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: context.colors.border)),
           ),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Expanded(
@@ -550,9 +553,9 @@ class _LeadEvidencePanel extends StatelessWidget {
                 key: const Key('lead-inclusion-reason'),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.infoSoft,
+                  color: context.colors.infoSoft,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFB2DDFF)),
+                  border: Border.all(color: context.colors.border),
                 ),
                 child: Text('Included because $inclusionReason',
                     style: Theme.of(context).textTheme.bodyMedium),
@@ -632,7 +635,7 @@ class _DetailGrid extends StatelessWidget {
                   width: width,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.canvas,
+                    color: context.colors.canvas,
                     borderRadius: BorderRadius.circular(9),
                   ),
                   child: Column(
@@ -671,14 +674,14 @@ class _TimelineEntry extends StatelessWidget {
                 Container(
                   width: 10,
                   height: 10,
-                  decoration: const BoxDecoration(
-                    color: AppColors.ink,
+                  decoration: BoxDecoration(
+                    color: context.colors.ink,
                     shape: BoxShape.circle,
                   ),
                 ),
                 if (!isLast)
                   Expanded(
-                    child: Container(width: 1, color: AppColors.border),
+                    child: Container(width: 1, color: context.colors.border),
                   ),
               ],
             ),

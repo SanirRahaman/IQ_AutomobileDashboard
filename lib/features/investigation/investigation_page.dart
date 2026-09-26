@@ -163,27 +163,6 @@ class _InvestigationScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final horizontal = MediaQuery.sizeOf(context).width >= 720 ? 32.0 : 16.0;
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.ink,
-        foregroundColor: Colors.white,
-        title: const Text('yoyotaDealers'),
-        leading: IconButton(
-          tooltip: 'Back',
-          onPressed: () => AppNavigation.up(context),
-          icon: const Icon(Icons.arrow_back),
-        ),
-        actions: [
-          TextButton.icon(
-            onPressed: () => AppNavigation.go(context, '/',
-                filters: scopedController.filters
-                    .copyWith(branchId: null, repId: null)),
-            icon: const Icon(Icons.dashboard_outlined),
-            label: const Text('Overview'),
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
       body: SelectionArea(
         child: SingleChildScrollView(
           key: const Key('investigation-scroll'),
@@ -488,7 +467,7 @@ class _ComparisonTable extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            color: AppColors.canvas,
+            color: context.colors.canvas,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
@@ -534,7 +513,7 @@ class _ComparisonTableRowState extends State<_ComparisonTableRow> {
   @override
   Widget build(BuildContext context) {
     final row = Container(
-      color: _hovered ? AppColors.infoSoft : AppColors.surface,
+      color: _hovered ? context.colors.infoSoft : context.colors.surface,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       child: Row(
         children: [
@@ -552,8 +531,8 @@ class _ComparisonTableRowState extends State<_ComparisonTableRow> {
                 ),
                 if (widget.onTap != null) ...[
                   const SizedBox(width: 8),
-                  const Icon(Icons.chevron_right,
-                      size: 18, color: AppColors.muted),
+                  Icon(Icons.chevron_right,
+                      size: 18, color: context.colors.muted),
                 ],
               ],
             ),
@@ -581,8 +560,8 @@ class _ComparisonTableRowState extends State<_ComparisonTableRow> {
     );
     if (widget.onTap == null) {
       return DecoratedBox(
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.border)),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: context.colors.border)),
         ),
         child: row,
       );
@@ -593,8 +572,8 @@ class _ComparisonTableRowState extends State<_ComparisonTableRow> {
       child: InkWell(
         onTap: widget.onTap,
         child: DecoratedBox(
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: AppColors.border)),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: context.colors.border)),
           ),
           child: row,
         ),

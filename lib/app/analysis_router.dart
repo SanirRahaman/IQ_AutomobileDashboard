@@ -7,6 +7,8 @@ import '../features/dashboard/dashboard_page.dart';
 import '../features/investigation/investigation_page.dart';
 import '../features/operations/operational_pages.dart';
 import '../features/exploration/exploration_page.dart';
+import '../features/shared/performance_navigation.dart';
+import '../features/shared/application_shell.dart';
 
 class AnalysisRouteParser extends RouteInformationParser<Uri> {
   const AnalysisRouteParser();
@@ -84,6 +86,10 @@ class AnalysisRouter extends RouterDelegate<Uri>
   Widget build(BuildContext context) {
     final parts = _uri.pathSegments;
     final key = ValueKey(_uri.toString());
+    final explorationSection = PerformanceSection.values
+        .where((section) => section != PerformanceSection.overview)
+        .where((section) => section.path == _uri.path)
+        .firstOrNull;
     Widget page;
     if (parts.length == 2 && parts.first == 'branch') {
       page = BranchDetailPage(
@@ -91,8 +97,9 @@ class AnalysisRouter extends RouterDelegate<Uri>
     } else if (parts.length == 2 && parts.first == 'rep') {
       page =
           RepDetailPage(key: key, baseController: controller, repId: parts[1]);
-    } else if (_uri.path == '/explore') {
-      page = ExplorationPage(controller: controller);
+    } else if (explorationSection != null) {
+      page =
+          ExplorationPage(controller: controller, section: explorationSection);
     } else if (_uri.path == '/pipeline') {
       page = PipelinePage(controller: controller);
     } else if (_uri.path == '/delivery') {
@@ -110,7 +117,14 @@ class AnalysisRouter extends RouterDelegate<Uri>
     }
     return Navigator(
       key: navigatorKey,
-      pages: [MaterialPage<void>(key: ValueKey(_uri.path), child: page)],
+      // The three explorer sections share one page so measure/group choices
+      // survive tab changes, including browser Back and Forward.
+      pages: [
+        MaterialPage<void>(
+            key: ValueKey(explorationSection == null ? _uri.path : '/explore'),
+            child: ApplicationShell(
+                controller: controller, path: _uri.path, child: page))
+      ],
       onDidRemovePage: (_) {},
     );
   }

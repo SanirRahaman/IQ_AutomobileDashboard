@@ -60,9 +60,9 @@ Future<void> showTargetBreakdownDialog({
                                 'Actuals use delivery dates. Partial months retain the full monthly target. '
                                 'Excluded months contribute neither actuals nor targets to the total.'),
                             const SizedBox(height: 8),
-                            const Text(
+                            Text(
                                 'Confirm that the extract covers the same business as the supplied targets.',
-                                style: TextStyle(color: AppColors.muted)),
+                                style: TextStyle(color: context.colors.muted)),
                             const SizedBox(height: 16),
                             for (final month in performance.targetMonths)
                               _MonthlyTargetRow(month: month),
@@ -84,7 +84,8 @@ class _MonthlyTargetRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: DecoratedBox(
         decoration: BoxDecoration(
-            color: AppColors.canvas, borderRadius: BorderRadius.circular(10)),
+            color: context.colors.canvas,
+            borderRadius: BorderRadius.circular(10)),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child:
@@ -106,8 +107,8 @@ class _MonthlyTargetRow extends StatelessWidget {
               const SizedBox(height: 8),
               LinearProgressIndicator(
                   value: row.progress,
-                  color: AppColors.info,
-                  backgroundColor: AppColors.border),
+                  color: context.colors.info,
+                  backgroundColor: context.colors.border),
               const SizedBox(height: 6),
               Text(row.status),
             ],

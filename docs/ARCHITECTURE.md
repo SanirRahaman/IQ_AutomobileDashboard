@@ -1,7 +1,8 @@
 # Architecture
 
-The `/explore` route adds a question-led investigation view without another router
-or data store. `AnalysisController.explore` prepares dimension and date scopes;
+The `/explore`, `/explore/trends` and `/explore/follow-up` routes provide comparison,
+trend and record-list views without another router or data store.
+`AnalysisController.explore` prepares dimension and date scopes;
 `analytics/services/performance_explorer.dart` calculates reusable typed comparison
 rows and monthly series using the existing engine. `exploration_presenter.dart`
 owns display labels and definitions; `exploration_page.dart` owns controls and
@@ -143,7 +144,7 @@ Add schema fields as optional first when backward compatibility is intended. Cha
 
 `AnalysisRouter` connects the existing route codec and controller to Flutter's
 Router/RouteInformation system. It owns the dashboard, branch, representative,
-pipeline, and delivery locations. The dashboard stores dimension filters in its
+pipeline, delivery and explorer locations. The dashboard stores dimension filters in its
 query; detail paths remain `/branch/:id` and `/rep/:id`. Flutter's hash URL strategy
 supports reloads on static hosting without server rewrite assumptions. Browser
 history restores filters through the same codec; a restoration guard prevents
@@ -162,3 +163,28 @@ browser download only. Representative table links use IDs rather than display na
 The application theme is the small UI-kit boundary for semantic colours, spacing,
 radii, typography, cards, buttons, chips, tables, tooltips, and dialogs. Feature
 widgets reuse these primitives instead of introducing local visual languages.
+
+`ApplicationShell` wraps every route with one navigation area, top bar and shared
+`DashboardFilterToolbar`. It exposes Overview, Comparisons, Monthly trends,
+Active pipeline, Deliveries and Follow-up lists. At 1200 pixels it uses an expanded
+sidebar (which can collapse); from 760 pixels it uses an icon rail; below that it
+uses a menu drawer. Breakpoints use actual available width. Inner pages receive
+the remaining content width so their tables and cards reflow correctly.
+
+`AppearanceController` owns Light, Dark and System preferences, with System as the
+default. `AppearanceScope` shares it with the shell. A conditional platform adapter
+saves only the appearance choice in browser storage; blocked storage safely falls
+back to an in-memory choice. Sidebar collapse is session-only. `AppPalette` supplies
+semantic colours to widgets and chart painters, while `buildAppTheme` styles
+Material controls, overlays, tables and both loading/error states. Appearance does
+not change the analysis controller or filter URL.
+
+Explorer locations are `/explore`,
+`/explore/trends` and `/explore/follow-up`. They share a Navigator page identity,
+preserving local measure/group/sort state across those tabs. The existing router
+continues to own URLs and filter restoration; refreshing restores the section
+and data filters, with default local presentation choices. Visiting Overview also
+disposes the explorer's local presentation state. Reset clears filters while
+retaining the current route. The grouped measure
+chips in the explorer presenter are presentation metadata only; all calculations
+remain in the existing analytics services.

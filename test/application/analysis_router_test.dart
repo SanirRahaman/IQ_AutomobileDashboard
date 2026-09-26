@@ -48,6 +48,30 @@ void main() {
     router.dispose();
     fresh.dispose();
   });
+  for (final path in ['/explore/trends', '/explore/follow-up']) {
+    test('$path restores on refresh and browser history keeps filters',
+        () async {
+      c.setBranch('B1');
+      r.go(path);
+      final saved = r.currentConfiguration;
+      r.go('/explore');
+      final comparison = r.currentConfiguration;
+      await r.setNewRoutePath(saved);
+      expect(r.currentConfiguration.path, path);
+      expect(c.filters.branchId, 'B1');
+      await r.setNewRoutePath(comparison);
+      expect(r.currentConfiguration.path, '/explore');
+      final fresh = AnalysisController(dataset: c.dataset);
+      final router = AnalysisRouter(fresh);
+      await router.setNewRoutePath(saved);
+      expect(router.currentConfiguration, saved);
+      expect(fresh.filters.branchId, 'B1');
+      fresh.reset();
+      expect(router.currentConfiguration.path, path);
+      router.dispose();
+      fresh.dispose();
+    });
+  }
   test(
       'browser route restoration and back/forward do not feed back or lose scope',
       () async {

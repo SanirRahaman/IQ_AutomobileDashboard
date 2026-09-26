@@ -9,7 +9,7 @@ metric definitions remain governed by ANALYTICS_SPEC.md.
 - [Microsoft Power BI dashboard design](https://learn.microsoft.com/en-us/power-bi/create-reports/service-dashboards-design-tips): prioritize the audience's decisions, put essential metrics first, use simple comparisons and consistent period labels, avoid decorative charts.
 - [Tableau effective dashboards](https://help.tableau.com/current/pro/desktop/en-us/dashboards_best_practices.htm): clear audience/purpose, prominent key view, limited simultaneous views, discoverable filters, layouts tested at their actual device sizes.
 
-Applied hierarchy: visible scope and snapshot → business pulse with decision context
+Applied overview hierarchy: persistent workspace navigation, scope and snapshot → business pulse with decision context
 → ranked management priorities → target and operational health → management gates →
 branch/source/model diagnosis → cohort detail. The default sales-journey view now
 uses Contact → Test Drive → Close; the full six-stage journey remains one deliberate
@@ -37,3 +37,39 @@ No appointments, inventory, margin, acquisition cost, forecasts, representative
 targets, or currency are inferred from the supplied data. Delivery events and
 lead-creation cohorts have separate, visible definitions. Partial months are not
 presented as completed target failures. Unfinished opportunities remain active.
+
+## Visible performance navigation — 25 September 2026
+
+The small Explore performance button and its comparison dropdowns hid the available
+questions. The interface now exposes **Overview · Comparisons · Monthly trends ·
+Follow-up lists** near the Sales performance heading. These share the existing
+routes and filters rather than introducing another navigation system.
+
+Comparisons asks for the measure first, then who to compare. All 17 measures are
+visible in four labelled groups: Sales, Conversion, Pipeline, and Losses & delivery.
+Vehicle models, Branches, Representatives and Lead sources are visible selection
+buttons underneath. For example: **Comparisons → Resolved conversion → Branches**.
+The selected measure and group are repeated in the results heading.
+
+Selected controls use text/checkmarks as well as the existing brand colour.
+Controls wrap at smaller widths instead of requiring horizontal scrolling.
+The trade-off is more vertical space, especially on phones; results follow below
+the choices. Existing bars, ranking controls, two-group comparison, evidence and
+exports remain available. Analytical definitions and source data are unchanged.
+
+The section and data filters survive refresh through the URL. Measure/group/sort
+choices persist between the three explorer tabs, but reset after refresh or a
+visit to Overview. This distinction is explained in the user guide.
+
+## Shared workspace and appearance — 26 September 2026
+
+The main tab strip is now a persistent sidebar with six destinations, including
+pipeline and deliveries. It becomes an icon rail on tablets and a drawer on phones.
+Comparison measures and dimensions remain visible in the page. A shared top bar
+and filter toolbar keep page context, historical snapshot and scope discoverable.
+
+Light, Dark and System share semantic colours, labelled statuses and existing
+branding. Browser storage saves appearance only. Cards, tables, charts, menus and
+supporting-record panels follow the same palette. There are no decorative gauges,
+fake account controls or new analytics. The sidebar can collapse on desktop; inner
+page breakpoints use the width remaining after navigation.

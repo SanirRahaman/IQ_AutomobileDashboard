@@ -17,6 +17,8 @@ name is `yoyota_dealers`. It reads a bundled dealership dataset and helps users:
 - Examine aging opportunities and delivery delays.
 - Read explainable findings and inspect the records behind them.
 - Download filtered follow-up lists.
+- Rank models, branches, representatives and sources across 17 measures, compare
+  two groups, and inspect monthly trends with period/maturity warnings.
 
 It is not a live CRM: it does not save edits to customers, send messages, assign
 follow-up tasks, authenticate users or connect to a backend. Reloading loads the
@@ -76,6 +78,19 @@ Do not edit `build/web`: it is generated output and the next build replaces it.
 
 Start at **Sales performance**. The period and branch controls describe the current
 view. “Data as of” describes the dataset, not the selected period or today's date.
+
+The sidebar opens **Overview**, **Comparisons**, **Monthly trends**, **Active
+pipeline**, **Deliveries** and **Follow-up lists**. On tablets it becomes an icon
+rail with tooltips; on phones, open the menu at the top left. The top bar keeps the
+current view, dataset date and appearance menu available. Choose **Light**, **Dark**
+or **System**; the browser remembers this choice. Period, branch and additional
+filters are shared across pages.
+
+In Comparisons, choose a visible measure first, then choose
+Vehicle models, Branches, Representatives or Lead sources. For example,
+**Resolved conversion → Branches** shows each branch's resolved conversion.
+The measure buttons are grouped into Sales, Conversion, Pipeline, and Losses &
+delivery. On smaller screens they wrap rather than scroll horizontally.
 
 Read the KPI tooltips before comparing cards: leads received and resolved conversion
 use lead creation dates; vehicles delivered uses delivery dates. The target panel
@@ -151,6 +166,8 @@ All paths below are relative to the repository root.
   groups, losses, pipeline, deliveries and cohorts.
 - `lib/analytics/services/management_performance.dart`: delivery output, target coverage,
   actual/target/variance/attainment and eligible previous-month comparisons.
+- `lib/analytics/services/performance_explorer.dart`: typed comparison groups,
+  ranking, evidence eligibility and monthly series using the existing engine.
 
 ### Filters and coordination
 
@@ -160,6 +177,8 @@ All paths below are relative to the repository root.
 - `analysis_controller.dart`: filter setters, normalization, recalculation and notifications.
 - `analysis_results.dart`: the bundle of results consumed by presentation code.
 - `analysis_route_codec.dart`: converts filter state to/from URL paths and query parameters.
+- `evidence_order.dart`: supporting-record sort order, preserving the link between
+  each displayed row and its details, including repeated delivery records.
 
 ### Findings and export
 
@@ -177,6 +196,17 @@ All paths below are relative to the repository root.
 - `lib/features/dashboard/dashboard_page.dart`: main dashboard and filters.
 - `dashboard_view_data.dart`: dashboard labels and display-ready results.
 - `lib/features/shared/target_panel.dart`: target reporting reused across screens.
+- `lib/features/shared/application_shell.dart`: sidebar/rail/drawer, top bar,
+  current-page context, snapshot indicator and the shared filter toolbar.
+- `lib/features/shared/performance_navigation.dart`: the explorer section enum
+  used by its pages and router; the previous tab-strip widget has been removed.
+- `lib/app/appearance_controller.dart`: Light/Dark/System preference and sidebar
+  collapse state. Appearance persists; collapse state is session-only.
+- `lib/platform/preferences*.dart`: browser storage with a safe non-web fallback.
+- `lib/features/exploration/exploration_page.dart`: comparison measure/group
+  controls, monthly charts, follow-up lists and local presentation state.
+- `lib/features/exploration/exploration_presenter.dart`: measure labels,
+  definitions, formatting and the four visible measure groups.
 - `lib/features/investigation/investigation_page.dart`: branch/representative pages and comparisons.
 - `investigation_view_data.dart`: detail-page presentation data.
 - `lead_evidence_dialog.dart`: record lists, record detail and export actions.
@@ -269,9 +299,22 @@ http://localhost:8080/#/?branch=B1&from=2025-12-01&to=2025-12-31
 ```
 
 The app uses IDs rather than display names; this example is not a production constant.
-Main paths are `/`, `/branch/:id`, `/rep/:id`, `/pipeline` and `/delivery` after `#`.
+Main paths after `#` are:
+
+- `/`: Overview.
+- `/explore`: Comparisons.
+- `/explore/trends`: Monthly trends.
+- `/explore/follow-up`: Follow-up lists.
+- `/branch/:id`, `/rep/:id`, `/pipeline` and `/delivery`: existing detail pages.
+
 Query keys include `branch`, `rep`, `from`, `to`, `source`, `model` and `status`.
 Entity detail paths carry their own ID; the codec avoids redundant entity queries.
+
+The three explorer tabs share one Navigator page identity. Switching among them
+keeps local measure, group and sort choices; data filters also remain applied.
+Refresh restores the tab and filters from the URL, but resets those local choices.
+Visiting Overview also resets the explorer's local choices. Reset clears filters
+without switching tabs.
 
 Selecting a representative establishes the associated branch. Changing branches
 clears an incompatible representative. Reset returns to the unfiltered network.
@@ -293,6 +336,33 @@ restoration guard prevents browser Back from creating another forward navigation
 
 A text-only change normally needs no new formula test. Run the analyzer and relevant
 widget checks when layout or interaction changes.
+
+### Change comparison buttons or their groups
+
+Edit `comparisonMeasureGroups` in `exploration_presenter.dart` to move an existing
+measure between the four labelled rows. Edit `MetricLabels` or `DimensionLabels`
+there to change wording. The `ComparisonMetric` value still selects the existing
+calculation; changing a label or group does not change its formula.
+
+Edit the destinations and navigation in `application_shell.dart` for sidebar
+labels, icons or styling. Explorer paths also use `PerformanceSection` in
+`performance_navigation.dart`. A path change
+also needs matching routing/history tests. Keep `/explore` working for existing links.
+Check `test/features/exploration_page_test.dart` for responsive interaction tests
+and `test/application/analysis_router_test.dart` for restoration checks.
+
+### Change appearance without breaking dark mode
+
+`buildAppTheme` in `app_theme.dart` creates both themes. Use `context.colors` for
+custom widget colours, and `Theme.of(context)` for standard component styling.
+`AppPalette` pairs foreground, background and status colours for each brightness.
+Custom chart painters receive a palette explicitly and repaint when it changes.
+Avoid fixed white backgrounds or fixed dark text in feature widgets.
+
+`AppearanceController` defaults to System, validates stored preferences, and writes
+the chosen mode through the platform storage adapter. No dataset or filter state
+is stored there. `application_shell_test.dart` covers both themes, navigation,
+evidence dialogs, system brightness changes and semantic text contrast.
 
 ### Add a new KPI
 

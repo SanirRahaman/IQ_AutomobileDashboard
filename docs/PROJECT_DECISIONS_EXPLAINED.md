@@ -285,11 +285,63 @@ manual browser checks.
 **Why:** A correct formula does not prove that a dropdown updates the URL. A successful
 build does not prove a CSV downloads or a mobile dialog fits on screen.
 
-**Trade-off:** Browser checking takes additional time and is not exhaustive. The
-recorded finishing pass had 77 passing tests, a clean analyzer and a successful web
-build; those are dated results, not a promise about future edits.
+**Trade-off:** Browser checking takes additional time and is not exhaustive.
+The original finishing pass had 77 passing tests; the 25 September navigation pass
+had 98, a clean analyzer and a successful web build. These are dated results,
+not a promise about future edits. The verification record separates the passes.
 
 **Where:** `test/` and [Verification record](VERIFICATION.md).
+
+## 19. Show the comparison choices before asking users to choose
+
+**Decision:** Replace the small Explore performance entry button with four visible
+main tabs. Replace the measure and comparison-group dropdowns with visible buttons.
+
+**Why:** A manager should see what can be compared without opening menus to discover
+the options. The order follows the question: choose **Resolved conversion**, then
+**Branches**, to answer “Which branches convert more of their resolved leads?”
+All 17 measures remain available, organised into four labelled groups.
+
+**Trade-off:** Visible choices take more space. They wrap into extra rows on phones,
+so the results may require vertical scrolling. Only the chosen comparison is drawn;
+the screen does not display 17 charts at once.
+
+**State decision:** Each main section has its own URL. The three explorer tabs
+share a page identity, so measure/group/sort selections stay in place between them.
+Refresh restores the section and data filters, but resets those local choices.
+Visiting Overview also resets the explorer choices. No analytical formula changes.
+
+**Where:** `lib/features/shared/performance_navigation.dart`,
+`lib/features/exploration/exploration_page.dart`, `exploration_presenter.dart`,
+and `lib/app/analysis_router.dart`.
+
+## 20. Give every page the same workspace and appearance controls
+
+**Decision:** Move the previous main tab strip into a shared sidebar. Keep the
+visible comparison measure and group buttons. Use a top bar for page context,
+snapshot date and appearance, with one common filter toolbar below it.
+
+**Why:** A manager can move from performance to pipeline or deliveries without
+learning a different page layout or searching for filters. This replaces the main
+navigation described in decision 19; the comparison choices still work the same.
+
+**Responsive choice:** Expanded sidebar on wide desktops, an icon rail on tablets,
+and a menu drawer on phones. Page content reflows to the remaining width, rather
+than pretending the sidebar takes no space. Desktop users can collapse the sidebar.
+
+**Appearance choice:** Light, Dark and System use the same semantic colour roles.
+For example, “critical” remains a labelled status in both themes. Tables, chart
+labels, record dialogs and loading/error screens also follow the selected theme.
+System is the default. Browser storage remembers an explicit preference; if storage
+is blocked, the choice still works until the app reloads. No new package is needed.
+
+**Safeguard:** Changing appearance does not reset filters, navigation or analytics.
+The palette is a presentation concern; it never recalculates a KPI. Tests cover
+both themes, text contrast, navigation and phone/tablet/desktop reflow.
+
+**Where:** `application_shell.dart`, `appearance_controller.dart`, `app_theme.dart`,
+`yoyota_dealers_app.dart`, `platform/preferences*.dart` and
+`test/features/application_shell_test.dart`.
 
 ## Before changing a decision
 

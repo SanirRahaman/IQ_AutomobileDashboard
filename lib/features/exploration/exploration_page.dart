@@ -6,11 +6,17 @@ import '../../application/analysis/analysis_controller.dart';
 import '../dashboard/dashboard_view_data.dart';
 import '../investigation/lead_evidence_dialog.dart';
 import '../operations/operational_pages.dart';
+import '../shared/performance_navigation.dart';
 import 'exploration_presenter.dart';
 
 class ExplorationPage extends StatefulWidget {
-  const ExplorationPage({super.key, required this.controller});
+  const ExplorationPage({
+    super.key,
+    required this.controller,
+    this.section = PerformanceSection.comparisons,
+  });
   final AnalysisController controller;
+  final PerformanceSection section;
   @override
   State<ExplorationPage> createState() => _ExplorationPageState();
 }
@@ -23,7 +29,6 @@ class _ExplorationPageState extends State<ExplorationPage> {
   bool _ascending = false;
   bool _compare = false;
   int _a = 0, _b = 1;
-  int _tab = 0;
   int _month = 0;
   int? _limit = 5;
 
@@ -64,29 +69,13 @@ class _ExplorationPageState extends State<ExplorationPage> {
   @override
   Widget build(BuildContext context) => OperationsScaffold(
       controller: widget.controller,
-      title: 'Explore performance',
+      title: 'Sales performance',
       question:
           'Compare the measure that matters, follow its trend, then open the supporting records.',
       body: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(
-            const DashboardPresenter().present(widget.controller).scopeSummary),
-        const SizedBox(height: 12),
-        Wrap(spacing: 8, runSpacing: 8, children: [
-          for (final item in const [
-            'Comparisons',
-            'Monthly trends',
-            'Follow-up lists'
-          ].indexed)
-            ChoiceChip(
-                key: Key('explore-tab-${item.$1}'),
-                label: Text(item.$2),
-                selected: _tab == item.$1,
-                onSelected: (_) => setState(() => _tab = item.$1)),
-        ]),
-        const SizedBox(height: 20),
-        if (_tab == 0) _comparisons(),
-        if (_tab == 1) _trends(),
-        if (_tab == 2) _followUp(),
+        if (widget.section == PerformanceSection.comparisons) _comparisons(),
+        if (widget.section == PerformanceSection.trends) _trends(),
+        if (widget.section == PerformanceSection.followUp) _followUp(),
         const SizedBox(height: 20),
         const Card(
             child: ExpansionTile(
@@ -106,20 +95,33 @@ class _ExplorationPageState extends State<ExplorationPage> {
     final maximum = shown.fold<double>(
         0, (m, r) => math.max(m, (r.value(_metric) ?? 0).abs().toDouble()));
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _measureTabs(),
+      const SizedBox(height: 16),
+      Text('2. Compare by', style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 6),
+      Wrap(spacing: 8, runSpacing: 4, children: [
+        for (final dimension in ComparisonDimension.values)
+          ChoiceChip(
+            key: Key('explore-dimension-${dimension.name}'),
+            label: Text(dimension.label),
+            selected: _dimension == dimension,
+            selectedColor: context.colors.brandSoft,
+            onSelected: (_) {
+              if (_dimension == dimension) return;
+              setState(() {
+                _dimension = dimension;
+                _load();
+              });
+            },
+          ),
+      ]),
+      const SizedBox(height: 16),
+      Text('${_metric.label} by ${_dimension.label.toLowerCase()}',
+          style: Theme.of(context).textTheme.titleLarge),
+      const SizedBox(height: 6),
+      Text(_metric.definition),
+      const SizedBox(height: 12),
       Wrap(spacing: 12, runSpacing: 12, children: [
-        _select<ComparisonDimension>(
-            'Compare',
-            _dimension,
-            ComparisonDimension.values,
-            (d) => d.label,
-            (d) => setState(() {
-                  _dimension = d;
-                  _load();
-                }),
-            key: 'explore-dimension'),
-        _select<ComparisonMetric>('Measure', _metric, ComparisonMetric.values,
-            (m) => m.label, (m) => setState(() => _metric = m),
-            key: 'explore-metric'),
         _select<bool>(
             'Order',
             _ascending,
@@ -135,8 +137,6 @@ class _ExplorationPageState extends State<ExplorationPage> {
             (i) => setState(() => _limit = i == 0 ? null : i),
             key: 'explore-limit'),
       ]),
-      const SizedBox(height: 12),
-      Text(_metric.definition),
       const SizedBox(height: 12),
       Wrap(
           spacing: 12,
@@ -187,6 +187,54 @@ class _ExplorationPageState extends State<ExplorationPage> {
       ],
     ]);
   }
+
+  Widget _measureTabs() => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text('1. Choose a measure',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            for (final group in comparisonMeasureGroups.indexed) ...[
+              if (group.$1 > 0) const Divider(height: 16),
+              LayoutBuilder(builder: (context, constraints) {
+                final label = Text(group.$2.label,
+                    style: Theme.of(context).textTheme.labelLarge);
+                final choices = Wrap(spacing: 6, runSpacing: 2, children: [
+                  for (final metric in group.$2.metrics)
+                    Tooltip(
+                      message: metric.definition,
+                      child: ChoiceChip(
+                        key: Key('explore-metric-${metric.name}'),
+                        label: Text(metric.label),
+                        selected: _metric == metric,
+                        selectedColor: context.colors.brandSoft,
+                        onSelected: (_) => setState(() => _metric = metric),
+                      ),
+                    ),
+                ]);
+                if (constraints.maxWidth < 900) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [label, const SizedBox(height: 4), choices],
+                  );
+                }
+                return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                          width: 140,
+                          child: Padding(
+                              padding: const EdgeInsets.only(top: 14),
+                              child: label)),
+                      Expanded(child: choices),
+                    ]);
+              }),
+            ],
+          ]),
+        ),
+      );
 
   Widget _trends() {
     const metrics = [
@@ -341,8 +389,8 @@ class _ComparisonBar extends StatelessWidget {
                 child: LinearProgressIndicator(
                     value: fraction,
                     minHeight: 6,
-                    color: AppColors.info,
-                    backgroundColor: AppColors.canvas)),
+                    color: context.colors.info,
+                    backgroundColor: context.colors.canvas)),
             const SizedBox(height: 6),
             Wrap(
                 alignment: WrapAlignment.spaceBetween,
@@ -351,8 +399,8 @@ class _ComparisonBar extends StatelessWidget {
                 children: [
                   Text(contextLabel),
                   if (onTap != null)
-                    const Text('View records →',
-                        style: TextStyle(color: AppColors.info)),
+                    Text('View records →',
+                        style: TextStyle(color: context.colors.info)),
                 ]),
           ])));
 }
@@ -401,6 +449,7 @@ class _MonthlyChart extends StatelessWidget {
             Positioned.fill(
                 child: CustomPaint(
                     painter: _TrendPainter(
+                        colors: context.colors,
                         points: points,
                         qualified: qualified,
                         baseline: upper + height,
@@ -442,10 +491,10 @@ class _MonthlyChart extends StatelessWidget {
                                             decoration: BoxDecoration(
                                                 shape: BoxShape.circle,
                                                 color: qualified[i]
-                                                    ? Colors.white
-                                                    : AppColors.info,
+                                                    ? context.colors.surface
+                                                    : context.colors.info,
                                                 border: Border.all(
-                                                    color: AppColors.info,
+                                                    color: context.colors.info,
                                                     width: 2))))))))),
               if (i % labelEvery == 0)
                 Positioned(
@@ -467,22 +516,24 @@ class _MonthlyChart extends StatelessWidget {
 
 class _TrendPainter extends CustomPainter {
   const _TrendPainter(
-      {required this.points,
+      {required this.colors,
+      required this.points,
       required this.qualified,
       required this.baseline,
       required this.left,
       required this.right});
+  final AppPalette colors;
   final List<Offset?> points;
   final List<bool> qualified;
   final double baseline, left, right;
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawLine(Offset(left, 20), Offset(left, baseline),
-        Paint()..color = AppColors.border);
+        Paint()..color = colors.border);
     canvas.drawLine(Offset(left, baseline), Offset(right, baseline),
-        Paint()..color = AppColors.border);
+        Paint()..color = colors.border);
     final paint = Paint()
-      ..color = AppColors.info
+      ..color = colors.info
       ..strokeWidth = 2;
     for (var i = 1; i < points.length; i++) {
       if (points[i - 1] != null && points[i] != null) {
@@ -504,5 +555,7 @@ class _TrendPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _TrendPainter oldDelegate) =>
-      oldDelegate.points != points || oldDelegate.right != right;
+      oldDelegate.points != points ||
+      oldDelegate.right != right ||
+      oldDelegate.colors.dark != colors.dark;
 }

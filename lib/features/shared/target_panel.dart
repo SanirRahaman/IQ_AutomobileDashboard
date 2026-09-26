@@ -57,7 +57,7 @@ class TargetPanel extends StatelessWidget {
                     if (total.missingMonths > 0)
                       Text(
                           '${total.missingMonths} branch-month targets missing or ambiguous; excluded.',
-                          style: const TextStyle(color: AppColors.warning)),
+                          style: TextStyle(color: context.colors.warning)),
                     const SizedBox(height: 8),
                     if (!compact) ...[
                       ...performance.branches.map((row) => _TargetRow(
@@ -67,9 +67,10 @@ class TargetPanel extends StatelessWidget {
                               filters: controller.filters))),
                       const SizedBox(height: 8),
                     ],
-                    const Text(
+                    Text(
                         'Supplied targets · confirm that the extract covers the same business.',
-                        style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                        style: TextStyle(
+                            fontSize: 11, color: context.colors.muted)),
                     if (compact) ...[
                       const SizedBox(height: 8),
                       const Text(
@@ -113,12 +114,12 @@ class _TargetRow extends StatelessWidget {
                   child: LinearProgressIndicator(
                       value: row.progress,
                       minHeight: 5,
-                      backgroundColor: AppColors.border,
-                      color: AppColors.info)),
+                      backgroundColor: context.colors.border,
+                      color: context.colors.info)),
               const SizedBox(height: 4),
               Text(
                   '${row.actual} / ${row.target} · ${DashboardPresenter.formatRate(row.attainment)} · ${row.status}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                  style: TextStyle(fontSize: 12, color: context.colors.muted)),
             ] else
               const Text('No comparable target'),
           ])));

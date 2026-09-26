@@ -1,6 +1,47 @@
 import '../../analytics/services/performance_explorer.dart';
 import '../dashboard/dashboard_view_data.dart';
 
+// Presentation groups only: each measure still uses its existing domain result.
+const comparisonMeasureGroups = [
+  (
+    label: 'Sales',
+    metrics: [
+      ComparisonMetric.deliveries,
+      ComparisonMetric.deliveredValue,
+      ComparisonMetric.leads,
+      ComparisonMetric.averageValue,
+      ComparisonMetric.medianValue,
+    ]
+  ),
+  (
+    label: 'Conversion',
+    metrics: [
+      ComparisonMetric.conversion,
+      ComparisonMetric.contactRate,
+      ComparisonMetric.testDriveRate,
+      ComparisonMetric.closeRate,
+    ]
+  ),
+  (
+    label: 'Pipeline',
+    metrics: [
+      ComparisonMetric.activeCount,
+      ComparisonMetric.activeValue,
+      ComparisonMetric.staleCount,
+      ComparisonMetric.staleValue,
+      ComparisonMetric.overdueCount,
+    ]
+  ),
+  (
+    label: 'Losses & delivery',
+    metrics: [
+      ComparisonMetric.lostCount,
+      ComparisonMetric.lostValue,
+      ComparisonMetric.deliveryDays,
+    ]
+  ),
+];
+
 extension DimensionLabels on ComparisonDimension {
   String get label => switch (this) {
         ComparisonDimension.model => 'Vehicle models',

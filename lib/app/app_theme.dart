@@ -33,7 +33,7 @@ abstract final class AppRadii {
   static const lg = 14.0;
 }
 
-ThemeData buildAppTheme() {
+ThemeData _buildLightTheme() {
   final scheme = ColorScheme.fromSeed(
     seedColor: AppColors.brand,
     brightness: Brightness.light,
@@ -170,5 +170,120 @@ ThemeData buildAppTheme() {
       textColor: AppColors.ink,
       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 2),
     ),
+  );
+}
+
+/// Semantic colours shared by widgets and custom chart painters.
+class AppPalette {
+  const AppPalette(this.dark);
+  final bool dark;
+  Color get ink => dark ? const Color(0xFFE6EAF0) : AppColors.ink;
+  Color get muted => dark ? const Color(0xFFA9B4C4) : AppColors.muted;
+  Color get border => dark ? const Color(0xFF334155) : AppColors.border;
+  Color get canvas => dark ? const Color(0xFF10161F) : AppColors.canvas;
+  Color get surface => dark ? const Color(0xFF192330) : AppColors.surface;
+  Color get brand => dark ? const Color(0xFFFF9B91) : AppColors.brand;
+  Color get brandSoft => dark ? const Color(0xFF432A2D) : AppColors.brandSoft;
+  Color get critical => dark ? const Color(0xFFFF9B91) : AppColors.critical;
+  Color get criticalSoft =>
+      dark ? const Color(0xFF432A2D) : AppColors.criticalSoft;
+  Color get positive => dark ? const Color(0xFF75D9B0) : AppColors.positive;
+  Color get positiveSoft =>
+      dark ? const Color(0xFF15392E) : AppColors.positiveSoft;
+  Color get warning => dark ? const Color(0xFFF4C078) : AppColors.warning;
+  Color get warningSoft =>
+      dark ? const Color(0xFF3E3220) : AppColors.warningSoft;
+  Color get info => dark ? const Color(0xFF8DBBFF) : AppColors.info;
+  Color get infoSoft => dark ? const Color(0xFF20364F) : AppColors.infoSoft;
+}
+
+extension AppPaletteContext on BuildContext {
+  AppPalette get colors =>
+      AppPalette(Theme.of(this).brightness == Brightness.dark);
+}
+
+ThemeData buildAppTheme({Brightness brightness = Brightness.light}) {
+  final base = _buildLightTheme();
+  final c = AppPalette(brightness == Brightness.dark);
+  final scheme = ColorScheme.fromSeed(
+          seedColor: AppColors.brand,
+          brightness: brightness,
+          surface: c.surface)
+      .copyWith(
+    primary: c.brand,
+    onPrimary:
+        brightness == Brightness.dark ? const Color(0xFF35120F) : Colors.white,
+    onSurface: c.ink,
+    onSurfaceVariant: c.muted,
+    outline: c.border,
+    outlineVariant: c.border,
+  );
+  return base.copyWith(
+    brightness: brightness,
+    colorScheme: scheme,
+    scaffoldBackgroundColor: c.canvas,
+    canvasColor: c.surface,
+    dividerColor: c.border,
+    disabledColor: c.muted,
+    textTheme: base.textTheme
+        .apply(bodyColor: c.ink, displayColor: c.ink)
+        .copyWith(
+            bodyMedium: base.textTheme.bodyMedium?.copyWith(color: c.muted)),
+    iconTheme: IconThemeData(color: c.muted),
+    appBarTheme: AppBarTheme(
+        backgroundColor: c.surface,
+        foregroundColor: c.ink,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent),
+    cardTheme: base.cardTheme.copyWith(
+        color: c.surface,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: c.border))),
+    dialogTheme: base.dialogTheme.copyWith(
+        backgroundColor: c.surface, surfaceTintColor: Colors.transparent),
+    bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: c.surface,
+        modalBackgroundColor: c.surface,
+        surfaceTintColor: Colors.transparent),
+    popupMenuTheme: PopupMenuThemeData(
+        color: c.surface,
+        textStyle: TextStyle(color: c.ink),
+        surfaceTintColor: Colors.transparent),
+    inputDecorationTheme: base.inputDecorationTheme.copyWith(
+        fillColor: c.surface,
+        labelStyle: TextStyle(color: c.muted),
+        hintStyle: TextStyle(color: c.muted),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: c.border))),
+    filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+            backgroundColor: c.brand,
+            foregroundColor: scheme.onPrimary,
+            minimumSize: const Size(0, 42))),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+            foregroundColor: c.ink,
+            side: BorderSide(color: c.border),
+            minimumSize: const Size(0, 42))),
+    tooltipTheme: base.tooltipTheme.copyWith(
+        decoration:
+            BoxDecoration(color: c.ink, borderRadius: BorderRadius.circular(8)),
+        textStyle: TextStyle(color: c.surface, fontSize: 12)),
+    dataTableTheme: base.dataTableTheme.copyWith(
+        headingRowColor: WidgetStatePropertyAll(c.canvas),
+        dataTextStyle: TextStyle(color: c.ink, fontSize: 13),
+        headingTextStyle: TextStyle(
+            color: c.muted, fontSize: 12, fontWeight: FontWeight.w600)),
+    chipTheme: base.chipTheme.copyWith(
+        backgroundColor: c.canvas,
+        selectedColor: c.brandSoft,
+        side: BorderSide(color: c.border),
+        checkmarkColor: c.brand,
+        labelStyle:
+            TextStyle(color: c.ink, fontSize: 12, fontWeight: FontWeight.w600)),
+    listTileTheme:
+        base.listTileTheme.copyWith(iconColor: c.muted, textColor: c.ink),
   );
 }

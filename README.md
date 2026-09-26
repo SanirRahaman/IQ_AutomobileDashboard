@@ -9,6 +9,10 @@ A Flutter Web dashboard that turns a supplied dealership dataset into sales perf
 ## Features
 
 - Management scorecard with leads, delivered vehicles, active opportunities, resolved conversion, target attainment and follow-up counts.
+- Responsive sidebar navigation for Overview, Comparisons, Monthly trends, Active pipeline, Deliveries and Follow-up lists.
+- Light, Dark and System appearance settings, remembered in the browser.
+- Seventeen visible comparison measures grouped into Sales, Conversion, Pipeline, and Losses & delivery, with model/branch/representative/source comparisons.
+- Highest/lowest rankings, two-group comparisons, monthly trends and sortable supporting records.
 - Branch → representative → supporting customer-record investigation.
 - Period, branch, representative, source, vehicle and status filters with URL persistence.
 - Branch-month delivery targets with actuals, variance and attainment, plus eligible previous-month delivery comparisons.
@@ -18,6 +22,27 @@ A Flutter Web dashboard that turns a supplied dealership dataset into sales perf
 - Responsive desktop, tablet and mobile layouts.
 
 This is a snapshot dashboard, not a live CRM. It has no login, backend, database, customer-record editor or runtime AI service. Calculations run in the browser. Active opportunities remain distinct from losses; no currency is inferred.
+
+## Find the right view
+
+Start with **Overview** for the scorecard and management findings. To compare
+performance, choose **Comparisons → a measure → a comparison group**. For example,
+**Resolved conversion → Branches** shows branch conversion rankings. Measures and
+groups are visible buttons, with no dropdown to open. They wrap on smaller screens.
+Use **Monthly trends** for changes over time and **Follow-up lists** for supporting
+opportunities and CSV downloads.
+
+Use the sidebar on desktop, the icon rail on tablet, or the menu button on a phone.
+The top bar shows the current view, drill-down context and dataset date. The same
+period/branch/additional-filter controls are available throughout the workspace.
+Open the appearance icon at the top right to select **Light**, **Dark** or **System**.
+System follows the device; an explicit choice is remembered in browser storage.
+
+Data filters carry across views. The URL preserves the current view and filters on
+refresh. Measure, group and sort choices stay selected between the three explorer
+tabs, but reset after refresh or a visit to Overview. See the
+[business owner's guide](docs/BUSINESS_OWNER_USER_GUIDE.md#14-answer-a-specific-question-with-the-performance-tabs)
+for question-by-question examples.
 
 ## Tech stack and prerequisites
 
@@ -81,7 +106,7 @@ lib/domain/        Dataset relationship indexes
 lib/analytics/     Lead facts and centralized business calculations
 lib/application/   Filters, state coordination, route codec and CSV builder
 lib/insights/      Explainable management rules and evidence
-lib/features/      Dashboard, investigations and operational pages
+lib/features/      Dashboard, comparisons/trends, investigations and operational pages
 lib/platform/      Browser download adapter
 scripts/           Reproducible Vercel build
 web/               Browser shell, manifest and icons
@@ -133,4 +158,4 @@ The application uses hash routes by default. Refreshing a link such as `/#/rep/S
 - [Analytics specification](docs/ANALYTICS_SPEC.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Dashboard UX research](docs/PRODUCT_UX_NOTES.md)
-- [Finishing-pass verification record](docs/VERIFICATION.md)
+- [Dated verification records](docs/VERIFICATION.md)

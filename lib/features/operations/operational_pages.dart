@@ -1,9 +1,7 @@
 import '../dashboard/dashboard_view_data.dart';
-import '../../app/analysis_router.dart';
 import 'package:flutter/material.dart';
 
 import '../../application/analysis/analysis_controller.dart';
-import '../../application/analysis/analysis_filters.dart';
 import '../../app/app_theme.dart';
 import '../investigation/lead_evidence_dialog.dart';
 import 'operational_view_data.dart';
@@ -244,22 +242,8 @@ class OperationsScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final horizontal = MediaQuery.sizeOf(context).width >= 720 ? 32.0 : 16.0;
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.ink,
-        foregroundColor: Colors.white,
-        title: const Text('yoyotaDealers'),
-        actions: [
-          TextButton(
-            onPressed: () => AppNavigation.go(context, '/'),
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
-            child: const Text('Overview'),
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
       body: Column(
         children: [
-          _OperationalFilterBar(controller: controller),
           Expanded(
             child: SelectionArea(
               child: SingleChildScrollView(
@@ -283,7 +267,7 @@ class OperationsScaffold extends StatelessWidget {
                         const SizedBox(height: 7),
                         Text(question,
                             style: Theme.of(context).textTheme.bodyLarge),
-                        const SizedBox(height: 26),
+                        const SizedBox(height: 20),
                         body,
                       ],
                     ),
@@ -296,211 +280,6 @@ class OperationsScaffold extends StatelessWidget {
       ),
     );
   }
-}
-
-class _OperationalFilterBar extends StatelessWidget {
-  const _OperationalFilterBar({required this.controller});
-  final AnalysisController controller;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: AppColors.border)),
-        ),
-        child: Row(children: [
-          const Icon(Icons.filter_alt_outlined, size: 19),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '${DashboardPresenter.formatScopeSummary(controller)} · '
-              '${DashboardPresenter.formatDate(controller.results.performance.start)} – '
-              '${DashboardPresenter.formatDate(controller.results.performance.end)}',
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          OutlinedButton.icon(
-            key: const Key('operations-filters'),
-            onPressed: () async {
-              final filters = await showDialog<AnalysisFilters>(
-                context: context,
-                builder: (_) => _FiltersDialog(controller: controller),
-              );
-              if (filters != null) controller.replaceFilters(filters);
-            },
-            icon: const Icon(Icons.tune, size: 18),
-            label: const Text('Filters'),
-          ),
-          if (!controller.filters.isDefault) ...[
-            const SizedBox(width: 6),
-            TextButton(onPressed: controller.reset, child: const Text('Reset')),
-          ],
-        ]),
-      );
-}
-
-class _FiltersDialog extends StatefulWidget {
-  const _FiltersDialog({required this.controller});
-  final AnalysisController controller;
-
-  @override
-  State<_FiltersDialog> createState() => _FiltersDialogState();
-}
-
-class _FiltersDialogState extends State<_FiltersDialog> {
-  late AnalysisDateRange? _dates = widget.controller.filters.dateRange;
-  late String? _branch = widget.controller.filters.branchId;
-  late String? _rep = widget.controller.filters.repId;
-  late String? _source = widget.controller.filters.source;
-  late String? _model = widget.controller.filters.vehicleModel;
-  late String? _status = widget.controller.filters.leadStatus;
-
-  @override
-  Widget build(BuildContext context) {
-    final dataset = widget.controller.dataset;
-    final reps = dataset.salesReps
-        .where((item) => _branch == null || item.branchId == _branch)
-        .toList();
-    return AlertDialog(
-      title: const Text('Filter opportunities'),
-      content: SizedBox(
-        width: 520,
-        child: SingleChildScrollView(
-          child: Column(children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Date range'),
-              subtitle: Text(_dates == null
-                  ? 'All available dates'
-                  : '${_date(_dates!.start)} – ${_date(_dates!.end)}'),
-              trailing: IconButton(
-                icon: const Icon(Icons.date_range),
-                onPressed: () async {
-                  final values = [
-                    ...dataset.leads.map((item) => item.createdAt),
-                    ...dataset.deliveries.map((item) => item.deliveryDate),
-                  ]..sort();
-                  if (values.isEmpty) return;
-                  final selected = await showDateRangePicker(
-                    context: context,
-                    firstDate: values.first,
-                    lastDate: values.last,
-                    initialDateRange: _dates == null ||
-                            _dates!.start.isBefore(values.first) ||
-                            _dates!.end.isAfter(values.last)
-                        ? null
-                        : DateTimeRange(start: _dates!.start, end: _dates!.end),
-                  );
-                  if (selected != null) {
-                    setState(() => _dates = AnalysisDateRange(
-                        start: selected.start, end: selected.end));
-                  }
-                },
-              ),
-            ),
-            _dropdown(
-                'Branch',
-                _branch,
-                'All branches',
-                dataset.branches.map((item) => MapEntry(item.id, item.name)),
-                (value) => setState(() {
-                      _branch = value;
-                      if (!dataset.salesReps.any((item) =>
-                          item.id == _rep &&
-                          (value == null || item.branchId == value))) {
-                        _rep = null;
-                      }
-                    })),
-            _dropdown(
-                'Sales representative',
-                _rep,
-                'All representatives',
-                reps.map((item) => MapEntry(item.id, item.name)),
-                (value) => setState(() => _rep = value)),
-            _dropdown(
-                'Lead source',
-                _source,
-                'All sources',
-                dataset.leads
-                    .map((item) => item.source)
-                    .whereType<String>()
-                    .toSet()
-                    .map((item) => MapEntry(item, item.replaceAll('_', ' '))),
-                (value) => setState(() => _source = value)),
-            _dropdown(
-                'Vehicle model',
-                _model,
-                'All models',
-                dataset.leads
-                    .map((item) => item.modelInterested)
-                    .toSet()
-                    .map((item) => MapEntry(item, item)),
-                (value) => setState(() => _model = value)),
-            _dropdown(
-                'Lead status',
-                _status,
-                'All statuses',
-                dataset.leads
-                    .map((item) => item.status.rawValue)
-                    .toSet()
-                    .map((item) => MapEntry(item, item.replaceAll('_', ' '))),
-                (value) => setState(() => _status = value)),
-          ]),
-        ),
-      ),
-      actions: [
-        TextButton(
-            onPressed: () => setState(() {
-                  _dates = null;
-                  _branch = null;
-                  _rep = null;
-                  _source = null;
-                  _model = null;
-                  _status = null;
-                }),
-            child: const Text('Clear')),
-        FilledButton(
-          onPressed: () => Navigator.pop(
-              context,
-              AnalysisFilters(
-                dateRange: _dates,
-                branchId: _branch,
-                repId: _rep,
-                source: _source,
-                vehicleModel: _model,
-                leadStatus: _status,
-              )),
-          child: const Text('Apply'),
-        ),
-      ],
-    );
-  }
-
-  Widget _dropdown(
-      String label,
-      String? value,
-      String allLabel,
-      Iterable<MapEntry<String, String>> options,
-      ValueChanged<String?> onChanged) {
-    final items = options.toList();
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        decoration: InputDecoration(labelText: label),
-        items: [
-          DropdownMenuItem(value: null, child: Text(allLabel)),
-          ...items.map((item) =>
-              DropdownMenuItem(value: item.key, child: Text(item.value))),
-        ],
-        onChanged: onChanged,
-      ),
-    );
-  }
-
-  String _date(DateTime value) =>
-      '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
 }
 
 class _KpiGrid extends StatelessWidget {
@@ -550,7 +329,7 @@ class _DefinitionBanner extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.infoSoft,
+          color: context.colors.infoSoft,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text('$text. Classification uses days since last activity.'),

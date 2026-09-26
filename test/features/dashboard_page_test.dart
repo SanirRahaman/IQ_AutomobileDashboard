@@ -157,6 +157,7 @@ void main() {
     addTearDown(controller.dispose);
     await tester.pumpWidget(YoyotaDealersApp(controller: controller));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('kpi-target')));
     await tester.tap(find.byKey(const Key('kpi-target')));
     await tester.pumpAndSettle();
     expect(find.text('25.0% attained'), findsWidgets);

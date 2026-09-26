@@ -25,7 +25,8 @@ records supplied to it; it does not update customer records or contact customers
 8. **Choose a branch and then a representative** if you need to understand who should follow up.
 9. **Download a follow-up list** when you want to take the open opportunities into a team discussion.
 
-You can return to the starting view with **Reset**.
+Use **Overview** to return to the summary cards. **Reset** clears data filters;
+it does not switch the current performance tab.
 
 ## 2. Check the date before making a decision
 
@@ -45,6 +46,35 @@ customer, ask your team whether there has been more recent activity outside this
 Changing the selected period does not change the snapshot date.
 
 ## 3. Choose what you want to see
+
+### Choose a performance view
+
+Use the left sidebar on desktop. On tablets it becomes an icon rail with labels
+on hover; on phones use the menu button at the top left:
+
+- **Overview:** summary cards, target context and management findings.
+- **Comparisons:** choose a measure, then Vehicle models, Branches,
+  Representatives or Lead sources. For example, **Resolved conversion → Branches**.
+- **Monthly trends:** see a measure across months and inspect each month's records.
+- **Active pipeline:** review open opportunities and their age.
+- **Deliveries:** review delivery output, duration and recorded delays.
+- **Follow-up lists:** open active, stale, overdue, lost or delivered records;
+  sort them and download the appropriate list.
+
+These views keep your data filters. Going to Overview does not mean “All branches”;
+use **Reset** to clear a branch or other filters. The comparison choices wrap onto
+more rows on a phone; scroll down to reach the results. See section 14 for examples.
+
+### Choose light or dark appearance
+
+Open the appearance icon at the top right. Choose **Light**, **Dark** or **System**.
+System follows your device setting. Your choice survives refresh in this browser;
+if browser storage is blocked, it still works for the current session. Changing
+appearance does not change filters, calculations or records.
+
+On a large desktop, the arrow at the bottom of the sidebar collapses or expands it.
+The top bar shows where you are; **Back** on a branch/representative page moves up
+one level while retaining the relevant filters.
 
 ### Review a month or a date range
 
@@ -336,16 +366,23 @@ You do not need the developer handbook for normal use. The main habit is simple:
 check the date and filters, inspect the evidence, and agree a clear next action with
 the team.
 
-## 14. Answer a specific question with Explore performance
+## 14. Answer a specific question with the performance tabs
 
-Open **Explore performance** below the overview cards. Your branch, representative,
-source, model, status and date filters stay applied. Use **Filters** on this page
-to change them. Data filters stay in the URL; the selected measure, tab and sort
-order are temporary presentation choices and reset after a refresh.
+Use **Overview**, **Comparisons**, **Monthly trends** or **Follow-up lists** from
+the sidebar or phone menu. Your branch, representative, source, model, status
+and date filters stay applied. Use **Filters** to change them. The current tab and
+data filters stay in the URL and survive refresh. Measure, comparison group and
+sort choices stay selected while switching between the three exploration tabs;
+they reset after a refresh or a visit to Overview.
+
+In **Comparisons**, first select a visible measure from **Sales**, **Conversion**,
+**Pipeline**, or **Losses & delivery**. Then select **Vehicle models**, **Branches**,
+**Representatives**, or **Lead sources** under **Compare by**. There are no measure
+or group dropdowns to open. On smaller screens these choices wrap onto more rows.
 
 ### “Which car sold the most? Which sold the least?”
 
-1. Choose **Comparisons → Vehicle models → Delivered vehicles**.
+1. Choose **Comparisons → Delivered vehicles → Vehicle models**.
 2. Choose **Highest first** or **Lowest first**. Choose **All results** to see every model.
 3. Click a model's bar to inspect its delivery records.
 
@@ -355,8 +392,8 @@ To ask about value instead, select **Delivered deal value**. Value is not profit
 ### “Which branch or salesperson performed best for a particular vehicle?”
 
 1. Open **Filters** and choose the vehicle model and period.
-2. Choose **Branches** or **Representatives** in Comparisons.
-3. Choose the measure you mean: deliveries, delivered value, or resolved conversion.
+2. In Comparisons choose the measure: deliveries, delivered value, or resolved conversion.
+3. Choose **Branches** or **Representatives** under **Compare by**.
 4. For rates, read the eligible/resolved lead count and any immature-cohort warning.
 
 You can use the same steps with a lead-source filter. Clear a branch filter to
@@ -364,7 +401,7 @@ compare representatives across the network. There is no unexplained “best over
 
 ### “Compare two branches, models, sources or representatives.”
 
-1. Choose the group and measure.
+1. Choose the measure and comparison group.
 2. Enable **Compare two**, then select **A** and **B**.
 3. Switch measures to check demand, value, conversion, inactivity or delivery speed.
 4. Open the supporting records for either group.

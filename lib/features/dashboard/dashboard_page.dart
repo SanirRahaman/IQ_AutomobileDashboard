@@ -22,21 +22,12 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   static const _presenter = DashboardPresenter();
   late DashboardViewData _viewData;
-  late DateTime _firstDate;
-  late DateTime _lastDate;
   bool _showFullJourney = false;
 
   @override
   void initState() {
     super.initState();
     _viewData = _presenter.present(widget.controller);
-    final dates = <DateTime>[
-      ...widget.controller.dataset.leads.map((lead) => lead.createdAt),
-      ...widget.controller.dataset.deliveries
-          .map((delivery) => delivery.deliveryDate),
-    ]..sort();
-    _firstDate = dates.isEmpty ? DateTime.now() : dates.first;
-    _lastDate = dates.isEmpty ? DateTime.now() : dates.last;
     widget.controller.addListener(_refresh);
   }
 
@@ -67,13 +58,6 @@ class _DashboardPageState extends State<DashboardPage> {
       body: SafeArea(
         child: Column(
           children: [
-            _ProductBar(scopeLabel: _viewData.scopeLabel),
-            _FilterBar(
-              controller: widget.controller,
-              dateLabel: _viewData.dateLabel,
-              onDatePressed: _chooseDateRange,
-              onMorePressed: _showAdvancedFilters,
-            ),
             Expanded(
               child: SelectionArea(
                 child: SingleChildScrollView(
@@ -120,13 +104,6 @@ class _DashboardPageState extends State<DashboardPage> {
                               onPressed: _showMetricRecords),
                           const SizedBox(height: 10),
                           Wrap(spacing: 8, runSpacing: 4, children: [
-                            OutlinedButton.icon(
-                              key: const Key('open-explorer'),
-                              onPressed: () =>
-                                  AppNavigation.go(context, '/explore'),
-                              icon: const Icon(Icons.query_stats, size: 18),
-                              label: const Text('Explore performance'),
-                            ),
                             if (widget.controller.filters.branchId != null)
                               TextButton.icon(
                                   onPressed: () => AppNavigation.go(context,
@@ -144,8 +121,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                 .controller.validationReport.issues.isNotEmpty)
                               TextButton.icon(
                                   onPressed: _showDataQuality,
-                                  icon: const Icon(Icons.warning_amber_rounded,
-                                      size: 18, color: AppColors.warning),
+                                  icon: Icon(Icons.warning_amber_rounded,
+                                      size: 18, color: context.colors.warning),
                                   label: Text(
                                       '${widget.controller.validationReport.issues.length} data-quality notices')),
                           ]),
@@ -343,40 +320,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Future<void> _chooseDateRange() async {
-    final current = widget.controller.filters.dateRange;
-    final result = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(_firstDate.year, _firstDate.month, _firstDate.day),
-      lastDate: DateTime(_lastDate.year, _lastDate.month, _lastDate.day),
-      initialDateRange: current == null ||
-              current.start.isBefore(_firstDate) ||
-              current.end.isAfter(_lastDate)
-          ? null
-          : DateTimeRange(start: current.start, end: current.end),
-      helpText: 'Choose analysis period',
-      saveText: 'Apply period',
-    );
-    if (result != null) {
-      widget.controller.setDateRange(
-        AnalysisDateRange(start: result.start, end: result.end),
-      );
-    }
-  }
-
-  Future<void> _showAdvancedFilters() async {
-    final result = await showModalBottomSheet<AnalysisFilters>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _AdvancedFiltersSheet(
-        controller: widget.controller,
-      ),
-    );
-    if (result != null) widget.controller.replaceFilters(result);
-  }
-
   void _showInsightEvidence(ManagementInsight insight) {
     _showEvidenceDialog(
       title: insight.title,
@@ -434,54 +377,81 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
-class _ProductBar extends StatelessWidget {
-  const _ProductBar({required this.scopeLabel});
+class DashboardFilterToolbar extends StatefulWidget {
+  const DashboardFilterToolbar({super.key, required this.controller});
+  final AnalysisController controller;
+  @override
+  State<DashboardFilterToolbar> createState() => _DashboardFilterToolbarState();
+}
 
-  final String scopeLabel;
+class _DashboardFilterToolbarState extends State<DashboardFilterToolbar> {
+  late DateTime _firstDate;
+  late DateTime _lastDate;
+  @override
+  void initState() {
+    super.initState();
+    final dates = <DateTime>[
+      ...widget.controller.dataset.leads.map((lead) => lead.createdAt),
+      ...widget.controller.dataset.deliveries
+          .map((delivery) => delivery.deliveryDate),
+    ]..sort();
+    _firstDate = dates.isEmpty ? DateTime.now() : dates.first;
+    _lastDate = dates.isEmpty ? DateTime.now() : dates.last;
+  }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      color: AppColors.ink,
-      child: Row(
-        children: [
+  Widget build(BuildContext context) => Column(children: [
+        _FilterBar(
+          controller: widget.controller,
+          dateLabel:
+              '${DashboardPresenter.formatDate(widget.controller.results.performance.start)} – ${DashboardPresenter.formatDate(widget.controller.results.performance.end)}',
+          onDatePressed: _chooseDateRange,
+          onMorePressed: _showAdvancedFilters,
+        ),
+        if (widget.controller.filters.repId != null ||
+            widget.controller.filters.source != null ||
+            widget.controller.filters.vehicleModel != null ||
+            widget.controller.filters.leadStatus != null)
           Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: AppColors.brand,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.directions_car_filled,
-                color: Colors.white, size: 18),
-          ),
-          const SizedBox(width: 10),
-          const Text(
-            'yoyotaDealers',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.2,
-            ),
-          ),
-          const Spacer(),
-          Flexible(
-            child: Text(
-              scopeLabel,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Color(0xFFB9C0CB),
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
+              width: double.infinity,
+              color: context.colors.surface,
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+              child: Text(
+                  DashboardPresenter.formatScopeSummary(widget.controller),
+                  style: Theme.of(context).textTheme.bodySmall)),
+      ]);
+  Future<void> _chooseDateRange() async {
+    final current = widget.controller.filters.dateRange;
+    final result = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(_firstDate.year, _firstDate.month, _firstDate.day),
+      lastDate: DateTime(_lastDate.year, _lastDate.month, _lastDate.day),
+      initialDateRange: current == null ||
+              current.start.isBefore(_firstDate) ||
+              current.end.isAfter(_lastDate)
+          ? null
+          : DateTimeRange(start: current.start, end: current.end),
+      helpText: 'Choose analysis period',
+      saveText: 'Apply period',
+    );
+    if (result != null) {
+      widget.controller.setDateRange(
+        AnalysisDateRange(start: result.start, end: result.end),
+      );
+    }
+  }
+
+  Future<void> _showAdvancedFilters() async {
+    final result = await showModalBottomSheet<AnalysisFilters>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AdvancedFiltersSheet(
+        controller: widget.controller,
       ),
     );
+    if (result != null) widget.controller.replaceFilters(result);
   }
 }
 
@@ -501,13 +471,13 @@ class _FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: context.colors.surface,
       elevation: 0,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.border)),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: context.colors.border)),
         ),
         child: Wrap(
           spacing: 10,
@@ -632,8 +602,8 @@ class _SectionHeading extends StatelessWidget {
       children: [
         Text(
           eyebrow,
-          style: const TextStyle(
-            color: AppColors.brand,
+          style: TextStyle(
+            color: context.colors.brand,
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.1,
@@ -741,7 +711,7 @@ class _PulseCard extends StatelessWidget {
                         style: Theme.of(context)
                             .textTheme
                             .labelMedium
-                            ?.copyWith(color: AppColors.info)),
+                            ?.copyWith(color: context.colors.info)),
                   ]))));
 }
 
@@ -800,11 +770,26 @@ class _InsightCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, soft) = switch (insight.severity) {
-      InsightSeverity.critical => (AppColors.critical, AppColors.criticalSoft),
-      InsightSeverity.warning => (AppColors.warning, AppColors.warningSoft),
-      InsightSeverity.opportunity => (AppColors.info, AppColors.infoSoft),
-      InsightSeverity.positive => (AppColors.positive, AppColors.positiveSoft),
-      InsightSeverity.informational => (AppColors.muted, AppColors.canvas),
+      InsightSeverity.critical => (
+          context.colors.critical,
+          context.colors.criticalSoft
+        ),
+      InsightSeverity.warning => (
+          context.colors.warning,
+          context.colors.warningSoft
+        ),
+      InsightSeverity.opportunity => (
+          context.colors.info,
+          context.colors.infoSoft
+        ),
+      InsightSeverity.positive => (
+          context.colors.positive,
+          context.colors.positiveSoft
+        ),
+      InsightSeverity.informational => (
+          context.colors.muted,
+          context.colors.canvas
+        ),
     };
     return Card(
         child: Padding(
@@ -828,8 +813,8 @@ class _InsightCard extends StatelessWidget {
                 Tooltip(
                     message:
                         '${insight.businessSignificance}\n${insight.evidenceStrength.name} evidence. ${insight.generationReason}',
-                    child: const Icon(Icons.info_outline,
-                        size: 16, color: AppColors.muted)),
+                    child: Icon(Icons.info_outline,
+                        size: 16, color: context.colors.muted)),
               ]),
               const SizedBox(height: 6),
               Text(insight.finding),
@@ -843,7 +828,7 @@ class _InsightCard extends StatelessWidget {
                   style: Theme.of(context)
                       .textTheme
                       .bodyMedium
-                      ?.copyWith(color: AppColors.ink)),
+                      ?.copyWith(color: context.colors.ink)),
               TextButton.icon(
                   onPressed: onPressed,
                   icon: const Icon(Icons.arrow_forward, size: 16),
@@ -864,7 +849,7 @@ class _InsightMetricStrip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.canvas,
+        color: context.colors.canvas,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -910,7 +895,7 @@ class _MetricDatum extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.muted,
+                    color: context.colors.muted,
                   )),
           const SizedBox(height: 2),
           Text(value, style: Theme.of(context).textTheme.titleMedium),
@@ -964,10 +949,10 @@ class _JourneyPanel extends StatelessWidget {
                   ),
                 ),
                 if (index < stages.length - 1)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 34),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 34),
                     child: Icon(Icons.arrow_forward,
-                        size: 16, color: AppColors.muted),
+                        size: 16, color: context.colors.muted),
                   ),
               ],
             ],
@@ -1042,8 +1027,8 @@ class _ManagementGatePanel extends StatelessWidget {
                         style:
                             Theme.of(context).textTheme.titleMedium?.copyWith(
                                   color: gate.affectedLeadIds.isEmpty
-                                      ? AppColors.muted
-                                      : AppColors.warning,
+                                      ? context.colors.muted
+                                      : context.colors.warning,
                                 )),
                     Text('${gate.affectedValue} affected',
                         style: Theme.of(context).textTheme.bodyMedium),
@@ -1053,7 +1038,7 @@ class _ManagementGatePanel extends StatelessWidget {
                           style: Theme.of(context)
                               .textTheme
                               .labelMedium
-                              ?.copyWith(color: AppColors.info)),
+                              ?.copyWith(color: context.colors.info)),
                     ],
                   ],
                 ),
@@ -1104,7 +1089,7 @@ class _JourneyStage extends StatelessWidget {
                 _count(context),
                 const SizedBox(width: 14),
                 Expanded(child: _labels(context)),
-                const Icon(Icons.chevron_right, color: AppColors.muted),
+                Icon(Icons.chevron_right, color: context.colors.muted),
               ],
             )
           : Column(
@@ -1119,7 +1104,7 @@ class _JourneyStage extends StatelessWidget {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(10),
-      hoverColor: AppColors.canvas,
+      hoverColor: context.colors.canvas,
       child: content,
     );
   }
@@ -1142,8 +1127,8 @@ class _JourneyStage extends StatelessWidget {
             stage.leakage,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: stage.leakedLeadIds.isEmpty
-                      ? AppColors.muted
-                      : AppColors.warning,
+                      ? context.colors.muted
+                      : context.colors.warning,
                 ),
           ),
           Text(stage.leakageValue,
@@ -1181,7 +1166,7 @@ class _BranchPanel extends StatelessWidget {
         return Column(
           children: [
             Container(
-              color: AppColors.canvas,
+              color: context.colors.canvas,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
               child: const Row(children: [
                 Expanded(flex: 22, child: Text('Branch')),
@@ -1236,7 +1221,7 @@ class _BranchWideRowState extends State<_BranchWideRow> {
       onExit: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
-        color: _hovered ? AppColors.infoSoft : AppColors.surface,
+        color: _hovered ? context.colors.infoSoft : context.colors.surface,
         child: InkWell(
           onTap: widget.onPressed,
           child: Padding(
@@ -1282,10 +1267,10 @@ class _BranchWideRowState extends State<_BranchWideRow> {
                       textAlign: TextAlign.right,
                       overflow: TextOverflow.ellipsis,
                       style: textStyle)),
-              const SizedBox(
+              SizedBox(
                   width: 22,
                   child: Icon(Icons.chevron_right,
-                      size: 18, color: AppColors.muted)),
+                      size: 18, color: context.colors.muted)),
             ]),
           ),
         ),
@@ -1325,7 +1310,7 @@ class _BranchCompactRow extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodyMedium),
                   ]),
             ),
-            const Icon(Icons.chevron_right, size: 18, color: AppColors.muted),
+            Icon(Icons.chevron_right, size: 18, color: context.colors.muted),
           ]),
         ),
       );
@@ -1458,8 +1443,8 @@ class _DashboardTableRow extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: header ? 12 : 13),
       decoration: header
           ? null
-          : const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.border)),
+          : BoxDecoration(
+              border: Border(bottom: BorderSide(color: context.colors.border)),
             ),
       child: Row(
         children: cells.indexed
@@ -1480,7 +1465,7 @@ class _DashboardTableRow extends StatelessWidget {
     );
     if (onTap == null) return row;
     return InkWell(
-      hoverColor: AppColors.infoSoft,
+      hoverColor: context.colors.infoSoft,
       onTap: onTap,
       child: row,
     );
@@ -1502,8 +1487,8 @@ class _DashboardCompactRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final row = Container(
       padding: const EdgeInsets.fromLTRB(16, 13, 16, 14),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.border)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: context.colors.border)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1519,7 +1504,7 @@ class _DashboardCompactRow extends StatelessWidget {
                 children: [
                   Text('${headers[item.$1]}: ',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.muted,
+                            color: context.colors.muted,
                           )),
                   Flexible(child: item.$2),
                 ],
@@ -1531,7 +1516,7 @@ class _DashboardCompactRow extends StatelessWidget {
     );
     if (onTap == null) return row;
     return InkWell(
-      hoverColor: AppColors.infoSoft,
+      hoverColor: context.colors.infoSoft,
       onTap: onTap,
       child: row,
     );
@@ -1640,8 +1625,8 @@ class _CohortTable extends StatelessWidget {
                           horizontal: 6, vertical: 3),
                       decoration: BoxDecoration(
                         color: row.isMature
-                            ? AppColors.positiveSoft
-                            : AppColors.warningSoft,
+                            ? context.colors.positiveSoft
+                            : context.colors.warningSoft,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -1650,8 +1635,8 @@ class _CohortTable extends StatelessWidget {
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: row.isMature
-                              ? AppColors.positive
-                              : AppColors.warning,
+                              ? context.colors.positive
+                              : context.colors.warning,
                         ),
                       ),
                     ),
@@ -1683,15 +1668,17 @@ class _CohortOutcomeBar extends StatelessWidget {
             if (row.delivered > 0)
               Expanded(
                   flex: row.delivered,
-                  child: Container(color: AppColors.positive)),
+                  child: Container(color: context.colors.positive)),
             if (row.lost > 0)
               Expanded(
-                  flex: row.lost, child: Container(color: AppColors.brand)),
+                  flex: row.lost,
+                  child: Container(color: context.colors.brand)),
             if (row.active > 0)
               Expanded(
-                  flex: row.active, child: Container(color: AppColors.info)),
+                  flex: row.active,
+                  child: Container(color: context.colors.info)),
             if (represented == 0)
-              Expanded(child: Container(color: AppColors.border)),
+              Expanded(child: Container(color: context.colors.border)),
           ]),
         ),
       ),
@@ -1700,7 +1687,7 @@ class _CohortOutcomeBar extends StatelessWidget {
         '${row.delivered} delivered · ${row.lost} lost · ${row.active} active',
         textAlign: TextAlign.right,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.muted,
+              color: context.colors.muted,
             ),
       ),
     ]);
@@ -1784,10 +1771,10 @@ class _OperationsRow extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.canvas,
+                color: context.colors.canvas,
                 borderRadius: BorderRadius.circular(9),
               ),
-              child: Icon(icon, size: 20, color: AppColors.ink),
+              child: Icon(icon, size: 20, color: context.colors.ink),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1800,7 +1787,7 @@ class _OperationsRow extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward, size: 17, color: AppColors.muted),
+            Icon(Icons.arrow_forward, size: 17, color: context.colors.muted),
           ],
         ),
       ),
@@ -1852,9 +1839,9 @@ class _AdvancedFiltersSheetState extends State<_AdvancedFiltersSheet> {
         .toList()
       ..sort();
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: EdgeInsets.fromLTRB(
         24,
@@ -2017,8 +2004,8 @@ class _NoResultsState extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 54),
         child: Column(
           children: [
-            const Icon(Icons.filter_alt_off_outlined,
-                size: 42, color: AppColors.muted),
+            Icon(Icons.filter_alt_off_outlined,
+                size: 42, color: context.colors.muted),
             const SizedBox(height: 14),
             Text('No records match these filters',
                 style: Theme.of(context).textTheme.titleLarge),

@@ -6,6 +6,7 @@ import '../data/repositories/dealership_dataset_repository.dart';
 import '../data/sources/dealership_data_source.dart';
 import 'analysis_router.dart';
 import 'app_theme.dart';
+import 'appearance_controller.dart';
 
 class YoyotaDealersApp extends StatefulWidget {
   const YoyotaDealersApp(
@@ -20,6 +21,7 @@ class YoyotaDealersApp extends StatefulWidget {
 }
 
 class _YoyotaDealersAppState extends State<YoyotaDealersApp> {
+  final _appearance = AppearanceController();
   AnalysisController? _loadedController;
   Object? _error;
   AnalysisRouter? _router;
@@ -66,6 +68,7 @@ class _YoyotaDealersAppState extends State<YoyotaDealersApp> {
 
   @override
   void dispose() {
+    _appearance.dispose();
     _routeProvider.dispose();
     _router?.dispose();
     _loadedController?.dispose();
@@ -73,7 +76,13 @@ class _YoyotaDealersAppState extends State<YoyotaDealersApp> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => AppearanceScope(
+      controller: _appearance,
+      child: ListenableBuilder(
+          listenable: _appearance,
+          builder: (context, _) => _buildApp(context)));
+
+  Widget _buildApp(BuildContext context) {
     final controller = _controller;
     if (_error != null || controller == null) {
       return MaterialApp.router(
@@ -82,6 +91,12 @@ class _YoyotaDealersAppState extends State<YoyotaDealersApp> {
         title: 'yoyotaDealers',
         debugShowCheckedModeBanner: false,
         theme: buildAppTheme(),
+        darkTheme: buildAppTheme(brightness: Brightness.dark),
+        themeMode: _appearance.mode,
+        themeAnimationDuration:
+            (MediaQuery.maybeOf(context)?.disableAnimations ?? false)
+                ? Duration.zero
+                : const Duration(milliseconds: 150),
         routerDelegate: _LoadingRouter(_error == null
             ? const _DashboardLoadingState()
             : _DatasetErrorState(error: _error!, onRetry: _retry)),
@@ -98,6 +113,12 @@ class _YoyotaDealersAppState extends State<YoyotaDealersApp> {
       title: 'yoyotaDealers',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
+      darkTheme: buildAppTheme(brightness: Brightness.dark),
+      themeMode: _appearance.mode,
+      themeAnimationDuration:
+          (MediaQuery.maybeOf(context)?.disableAnimations ?? false)
+              ? Duration.zero
+              : const Duration(milliseconds: 150),
       routeInformationProvider: _routeProvider,
       routerDelegate: _router!,
       routeInformationParser: const AnalysisRouteParser(),
@@ -162,8 +183,8 @@ class _DatasetErrorState extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline,
-                        size: 42, color: AppColors.brand),
+                    Icon(Icons.error_outline,
+                        size: 42, color: context.colors.brand),
                     const SizedBox(height: 16),
                     Text('The dataset could not be loaded',
                         style: Theme.of(context).textTheme.headlineSmall,

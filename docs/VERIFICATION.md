@@ -1,4 +1,69 @@
-# Finishing-pass verification
+# Verification records
+
+These are dated results, not a live test status. The latest section records the
+workspace and appearance checks; the original finishing-pass record is retained
+below for historical context.
+
+## Workspace and appearance — 26 September 2026
+
+Verified locally using Flutter 3.24.4:
+
+- `flutter analyze --no-pub`: no issues found.
+- `flutter test --no-pub --reporter expanded`: all 103 tests passed.
+- `flutter build web --release --no-pub`: production web output generated.
+- New tests cover valid/invalid saved appearance, semantic text contrast, System
+  following platform appearance, Light/Dark switching, desktop collapse/expand,
+  phone drawer navigation and themed evidence at 1440, 820 and 390 pixels.
+- Browser inspection covered 1440 and 1280 pixel desktop, 820 pixel tablet and
+  390 pixel phone layouts. Sidebar, rail and drawer behaved as intended. The
+  common filters wrapped; comparison choices, monthly chart and evidence reflowed.
+- Browser checks confirmed Dark and Light preferences survive reload, branch
+  filtering changes the URL, explorer Back/Forward retain branch scope, and a
+  representative route restores its context after refresh. Desktop sidebar
+  collapse/expand and phone menu navigation were exercised.
+- Light evidence panels retained their selected record and supporting details
+  during a phone-to-desktop resize. Dark chart labels and overview statuses were
+  inspected visually. A low-contrast compact export icon found during inspection
+  received an explicit foreground colour and a regression assertion.
+- No browser console errors were captured in this inspected session.
+
+Analytics and raw data were unchanged. Existing analytics, routing and export
+regressions remain in the full suite. No new CSV download, production deployment,
+or complete screen-reader/browser compatibility audit was performed. The code and
+updated guides remain local at this checkpoint. Browser appearance persists only
+where local storage is available; the app remains usable when storage is blocked.
+
+## Performance tabs — 25 September 2026
+
+Verified locally after implementing the visible navigation and comparison choices:
+
+- `flutter analyze --no-pub`: no issues found.
+- `flutter test --no-pub --reporter expanded`: all 98 tests passed.
+- `flutter build web --release --no-pub`: succeeded; final build took 67.9 seconds.
+- Widget interaction checks at 1440, 820 and 390 pixels covered visible measures
+  and groups, comparison selection, tab switching, retained branch filters,
+  supporting records, sorting and navigation from Overview.
+- Router tests covered `/explore/trends` and `/explore/follow-up`, including
+  restoration, history state and resetting filters without changing the section.
+- Browser inspection at 1280, 820 and 390 pixels confirmed prominent main tabs,
+  wrapping controls and readable comparison results. Resolved conversion by
+  branches remained selected after navigating to trends and using browser Back.
+  Forward and refresh loaded Monthly trends correctly.
+- No browser console errors were captured in the inspected session.
+
+The full suite includes the existing analytics and export regressions. This pass
+changed presentation/navigation, not formulas or the source dataset. No new CSV
+download or production deployment was performed in this pass. The user's existing
+lockfile change was preserved; checks used the validated Flutter 3.24.4 toolchain
+after temporarily resolving compatible local dependencies.
+
+These checks cover the local Chromium-based browser, not every browser or a full
+screen-reader audit. Subsequent documentation-only edits did not rerun the Flutter
+suite. The tab implementation remained local and uncommitted at this checkpoint.
+
+---
+
+# Original finishing-pass verification
 
 Verified 17–18 September 2026 against the bundled dataset.
 
