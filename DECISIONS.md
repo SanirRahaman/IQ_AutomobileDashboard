@@ -128,8 +128,26 @@ useful and reduce the number of qualifications needed on screen.
 
 For real daily use, I would add a controlled way to refresh data and track agreed
 follow-up actions. Connecting private CRM data would also need authentication and
-access controls. I would consider forecasting only after getting enough reliable
-history to check whether its predictions are useful.
+access controls.
+
+I would also like to explore predictions, such as an estimated range of deliveries
+next month or which open opportunities may need earlier follow-up. Before adding
+that, I would need more reliable history and completed outcomes. I would start
+with a simple baseline and check its predictions against later records it had not
+seen. Estimates should show uncertainty, and an active opportunity should never
+be marked lost just because a model thinks it is unlikely to convert. The current
+extract is enough to explore the idea, but not to claim reliable forecasts.
+
+Another idea is a chat assistant using a small AI model. A manager could ask
+"Which branch needs attention?" or "Show me overdue orders for this branch."
+The assistant would use the existing calculations and filters, explain the results
+in plain words, and link to supporting records. It should not invent numbers or
+calculate a different conversion rate. I would first check whether a small model
+can answer these questions accurately, along with its speed, cost and how customer
+data would be protected. If the data cannot answer a question, it should say so.
+
+Neither predictions nor an AI chatbot is implemented in this version. These are
+future ideas; today's dashboard uses Dart calculations and rule-based findings.
 
 For this version, I focused on understandable numbers, useful investigation paths,
 and a working Vercel deployment. The project has tests for calculations, filters,
