@@ -1,6 +1,6 @@
 # yoyotaDealers
 
-A Flutter Web dashboard that turns a supplied dealership dataset into sales performance, target comparisons, management findings, and customer follow-up lists.
+A Flutter Web dashboard that turns a supplied dealership dataset into dealership business performance, target comparisons, management findings, and customer follow-up lists.
 
 **Repository:** [SanirRahaman/IQ_AutomobileDashboard](https://github.com/SanirRahaman/IQ_AutomobileDashboard)
 
@@ -9,9 +9,9 @@ A Flutter Web dashboard that turns a supplied dealership dataset into sales perf
 ## Features
 
 - Management scorecard with leads, delivered vehicles, active opportunities, resolved conversion, target attainment and follow-up counts.
-- Responsive sidebar navigation for Overview, Comparisons, Monthly trends, Active pipeline, Deliveries and Follow-up lists.
+- Responsive sidebar navigation for Overview, direct Vehicle models / Branches / Representatives / Lead sources comparisons, Monthly trends, Active pipeline, Deliveries and Follow-up lists.
 - Light, Dark and System appearance settings, remembered in the browser.
-- Seventeen visible comparison measures grouped into Sales, Conversion, Pipeline, and Losses & delivery, with model/branch/representative/source comparisons.
+- Five primary measures per comparison subject, with all seventeen measures available through More measures.
 - Highest/lowest rankings, two-group comparisons, monthly trends and sortable supporting records.
 - Branch → representative → supporting customer-record investigation.
 - Period, branch, representative, source, vehicle and status filters with URL persistence.
@@ -25,10 +25,12 @@ This is a snapshot dashboard, not a live CRM. It has no login, backend, database
 
 ## Find the right view
 
-Start with **Overview** for the scorecard and management findings. To compare
-performance, choose **Comparisons → a measure → a comparison group**. For example,
-**Resolved conversion → Branches** shows branch conversion rankings. Measures and
-groups are visible buttons, with no dropdown to open. They wrap on smaller screens.
+Start with **Overview** for compact business scorecards, target context and the first
+two management findings. Open the additional findings for more investigations.
+Choose **Vehicle models**, **Branches**, **Representatives**, or **Lead sources**
+directly under **Compare performance**. Each opens populated results and a short
+row of measures. **More measures** retains the other supported measures;
+**Ranking details & compare two** explains badges and offers a two-group view.
 Use **Monthly trends** for changes over time and **Follow-up lists** for supporting
 opportunities and CSV downloads.
 
@@ -39,8 +41,9 @@ Open the appearance icon at the top right to select **Light**, **Dark** or **Sys
 System follows the device; an explicit choice is remembered in browser storage.
 
 Data filters carry across views. The URL preserves the current view and filters on
-refresh. Measure, group and sort choices stay selected between the three explorer
-tabs, but reset after refresh or a visit to Overview. See the
+refresh. Changing comparison subject starts its default measure and order; refresh
+or a visit to Overview also resets local presentation choices. Data filters carry
+across destinations. See the
 [business owner's guide](docs/BUSINESS_OWNER_USER_GUIDE.md#14-answer-a-specific-question-with-the-performance-tabs)
 for question-by-question examples.
 
@@ -152,6 +155,7 @@ The application uses hash routes by default. Refreshing a link such as `/#/rep/S
 
 ## Documentation
 
+- [Assignment decisions: what I built and why](DECISIONS.md)
 - [Business owner's user guide](docs/BUSINESS_OWNER_USER_GUIDE.md)
 - [Project handbook](docs/PROJECT_HANDBOOK.md)
 - [Decisions explained](docs/PROJECT_DECISIONS_EXPLAINED.md)

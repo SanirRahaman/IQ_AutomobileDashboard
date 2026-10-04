@@ -42,7 +42,11 @@ bundled dataset again; the URL restores view filters. CSV export does not change
 
 You need a Flutter installation with web support and a supported browser. Dart is
 included with Flutter. `pubspec.yaml` declares the Dart constraint `^3.5.4`; use a
-compatible Flutter SDK. The file is not an exact Flutter-version pin.
+compatible Flutter SDK. The file is not an exact Flutter-version pin. To match
+production, use **Flutter 3.24.4 / Dart 3.5.4**, pinned in
+`scripts/vercel-build.sh`. The committed lockfile matches that SDK. A newer Flutter
+version can rewrite SDK-pinned dependencies and break Vercel's locked install;
+upgrade the toolchain and lockfile together only after testing.
 
 From the repository folder:
 
@@ -76,21 +80,22 @@ Do not edit `build/web`: it is generated output and the next build replaces it.
 
 ## 4. Walk through the interface
 
-Start at **Sales performance**. The period and branch controls describe the current
+Start at **Business overview**. The period and branch controls describe the current
 view. “Data as of” describes the dataset, not the selected period or today's date.
 
-The sidebar opens **Overview**, **Comparisons**, **Monthly trends**, **Active
-pipeline**, **Deliveries** and **Follow-up lists**. On tablets it becomes an icon
+The sidebar opens **Overview**; **Vehicle models**, **Branches**,
+**Representatives** and **Lead sources** under Compare performance; and **Monthly
+trends**, **Active pipeline**, **Deliveries** and **Follow-up lists** under Monitor
+& act. On tablets it becomes an icon
 rail with tooltips; on phones, open the menu at the top left. The top bar keeps the
 current view, dataset date and appearance menu available. Choose **Light**, **Dark**
 or **System**; the browser remembers this choice. Period, branch and additional
 filters are shared across pages.
 
-In Comparisons, choose a visible measure first, then choose
-Vehicle models, Branches, Representatives or Lead sources. For example,
-**Resolved conversion → Branches** shows each branch's resolved conversion.
-The measure buttons are grouped into Sales, Conversion, Pipeline, and Losses &
-delivery. On smaller screens they wrap rather than scroll horizontally.
+Open the comparison subject directly, then choose from its compact visible measure
+buttons. For example, **Branches → Resolved conversion** shows each branch's
+resolved conversion. On smaller screens the buttons wrap rather than scroll
+horizontally. Representative results state when a branch filter restricts scope.
 
 Read the KPI tooltips before comparing cards: leads received and resolved conversion
 use lead creation dates; vehicles delivered uses delivery dates. The target panel
@@ -143,6 +148,10 @@ All paths below are relative to the repository root.
 - `web/index.html`, `web/manifest.json`, `web/icons/`, `web/favicon.png`: browser shell and branding.
 - `pubspec.yaml`: package information, dependencies and bundled asset registration.
 - `pubspec.lock`: resolved dependency versions; do not casually regenerate through upgrades.
+- `scripts/vercel-build.sh`: installs and checks the pinned Flutter SDK, installs
+  locked dependencies, runs the analyzer and builds the release app.
+- `vercel.json`: build command, output directory, SPA fallback and cache headers.
+- `.gitignore`, `.vercelignore`: files excluded from Git and deployment uploads.
 
 ### Source data and validation
 
@@ -302,7 +311,10 @@ The app uses IDs rather than display names; this example is not a production con
 Main paths after `#` are:
 
 - `/`: Overview.
-- `/explore`: Comparisons.
+- `/compare/models`: Vehicle model comparison.
+- `/compare/branches`: Branch comparison.
+- `/compare/representatives`: Representative comparison.
+- `/compare/sources`: Lead source comparison.
 - `/explore/trends`: Monthly trends.
 - `/explore/follow-up`: Follow-up lists.
 - `/branch/:id`, `/rep/:id`, `/pipeline` and `/delivery`: existing detail pages.
@@ -310,11 +322,11 @@ Main paths after `#` are:
 Query keys include `branch`, `rep`, `from`, `to`, `source`, `model` and `status`.
 Entity detail paths carry their own ID; the codec avoids redundant entity queries.
 
-The three explorer tabs share one Navigator page identity. Switching among them
-keeps local measure, group and sort choices; data filters also remain applied.
-Refresh restores the tab and filters from the URL, but resets those local choices.
-Visiting Overview also resets the explorer's local choices. Reset clears filters
-without switching tabs.
+The comparison, trend and follow-up views share one Navigator page identity. Data
+filters remain applied when switching destinations. Refresh restores the route and
+filters from the URL, while presentation-only measure and order choices return to
+the destination default. Reset clears filters without switching views. `/explore`
+remains a compatibility alias for `/compare/models`.
 
 Selecting a representative establishes the associated branch. Changing branches
 clears an incompatible representative. Reset returns to the unfiltered network.
@@ -337,12 +349,14 @@ restoration guard prevents browser Back from creating another forward navigation
 A text-only change normally needs no new formula test. Run the analyzer and relevant
 widget checks when layout or interaction changes.
 
-### Change comparison buttons or their groups
+### Change comparison measures or destinations
 
-Edit `comparisonMeasureGroups` in `exploration_presenter.dart` to move an existing
-measure between the four labelled rows. Edit `MetricLabels` or `DimensionLabels`
-there to change wording. The `ComparisonMetric` value still selects the existing
-calculation; changing a label or group does not change its formula.
+Edit `comparisonMetricsFor` and `defaultComparisonMetric` in
+`exploration_presenter.dart` to change the visible measures or default for a
+subject. Edit `MetricLabels` or `DimensionLabels` there to change wording. The
+`ComparisonMetric` value still selects the existing calculation; changing a label
+does not change its formula. Ranking labels, support thresholds and metric
+direction also live in the presenter, never in widgets.
 
 Edit the destinations and navigation in `application_shell.dart` for sidebar
 labels, icons or styling. Explorer paths also use `PerformanceSection` in
@@ -470,8 +484,31 @@ shipping, run the complete suite and production build.
 Known scope limits: no backend or authentication, no invented currency, no supplied
 representative targets, uncertain target-population coverage, and no causal or
 forecasting model. Browser testing recorded in `VERIFICATION.md` is Chromium-based,
-not comprehensive browser or screen-reader certification. Deployment remains a
-separate task.
+not comprehensive browser or screen-reader certification.
+
+## 13. Publish an update
+
+The [GitHub repository](https://github.com/SanirRahaman/IQ_AutomobileDashboard)
+is connected to Vercel project `sanir1/iq-automobile-dashboard`. Pushes to `main`
+trigger production builds for the
+[live dashboard](https://iq-automobile-dashboard.vercel.app/).
+
+1. Use Flutter 3.24.4 and run `flutter pub get --enforce-lockfile`.
+2. Run the checks in section 11 and inspect the changed screens in a browser.
+3. Review `git diff` and `git status`; commit the intended source and documentation.
+4. Run `git push origin main`. Check that Vercel reports the commit as **Ready**.
+5. Open the live site and test the changed screen and a filtered URL after refresh.
+
+Vercel installs Flutter itself; it does not rely on Flutter being preinstalled.
+Its script checks the SDK commit, runs the locked dependency install and analyzer,
+then builds `build/web`. It does **not** run `flutter test`, so run tests before
+pushing. Build output, `.vercel/` and credentials must stay out of Git. No application
+environment variables or API keys are needed for the bundled-data dashboard.
+
+During the 26 September deployment, the browser initially served the previous app
+from its cache. A second refresh loaded the new sidebar. Check the visible version
+after deployment; a successful build alone does not prove the browser updated.
+See [Verification records](VERIFICATION.md) for the last recorded deployment checks.
 
 ## Suggested learning order
 
@@ -481,3 +518,13 @@ separate task.
 4. Follow one metric from the analytics engine through the presenter to its card.
 5. Read the matching small test before changing that metric.
 6. Use the detailed analytics specification whenever a definition is unclear.
+
+## October 2026 comparison UI notes
+
+`exploration_presenter.dart` defines the primary choices, default measures and
+sample-qualified descriptive badges. All seventeen existing measures remain
+available through More measures. Ranking details & compare two keeps pair
+selection out of the default workflow. Badges retain the full filtered comparison
+as their benchmark, even when only two rows are shown. `dashboard_page.dart`
+uses six scorecard columns above 1100 pixels of content width, then three, two
+or one as space reduces. This changes layout only, not the metrics.

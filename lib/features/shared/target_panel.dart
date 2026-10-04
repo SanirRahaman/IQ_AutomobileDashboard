@@ -10,9 +10,11 @@ class TargetPanel extends StatelessWidget {
     super.key,
     required this.controller,
     this.compact = false,
+    this.onViewDetails,
   });
   final AnalysisController controller;
   final bool compact;
+  final VoidCallback? onViewDetails;
   @override
   Widget build(BuildContext context) {
     final performance = controller.results.performance;
@@ -72,9 +74,12 @@ class TargetPanel extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 11, color: context.colors.muted)),
                     if (compact) ...[
-                      const SizedBox(height: 8),
-                      const Text(
-                          'Open Target attainment above for branch and month evidence.'),
+                      const SizedBox(height: 4),
+                      TextButton.icon(
+                          key: const Key('compact-target-details'),
+                          onPressed: onViewDetails,
+                          icon: const Icon(Icons.open_in_new, size: 16),
+                          label: const Text('View target breakdown')),
                     ],
                   ],
                   if (performance.comparison != null) ...[

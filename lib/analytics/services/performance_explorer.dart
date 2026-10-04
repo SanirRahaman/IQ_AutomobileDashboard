@@ -206,10 +206,15 @@ class PerformanceExplorer {
       }
     }
     if (dimension == ComparisonDimension.representative) {
+      final branchNames = {
+        for (final branch in dimensionScope.source.branches)
+          branch.id: branch.name,
+      };
       for (final rep in dimensionScope.source.salesReps) {
         if (rep.role.value == SalesRepRole.salesOfficer ||
             names.containsKey(rep.id)) {
-          names[rep.id] = rep.name;
+          final branch = branchNames[rep.branchId];
+          names[rep.id] = branch == null ? rep.name : '${rep.name} · $branch';
         }
       }
     }

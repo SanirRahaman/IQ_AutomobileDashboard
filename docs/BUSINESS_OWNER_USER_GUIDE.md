@@ -2,6 +2,9 @@
 
 ## A simple guide for a dealership owner or sales manager
 
+Open the [live dashboard](https://iq-automobile-dashboard.vercel.app/).
+Updated 3 October 2026 for direct comparison navigation and the compact Business overview.
+
 You do not need to understand code to use this website. It helps you answer:
 
 - How is the business performing?
@@ -26,7 +29,7 @@ records supplied to it; it does not update customer records or contact customers
 9. **Download a follow-up list** when you want to take the open opportunities into a team discussion.
 
 Use **Overview** to return to the summary cards. **Reset** clears data filters;
-it does not switch the current performance tab.
+it does not switch the current page.
 
 ## 2. Check the date before making a decision
 
@@ -53,8 +56,9 @@ Use the left sidebar on desktop. On tablets it becomes an icon rail with labels
 on hover; on phones use the menu button at the top left:
 
 - **Overview:** summary cards, target context and management findings.
-- **Comparisons:** choose a measure, then Vehicle models, Branches,
-  Representatives or Lead sources. For example, **Resolved conversion → Branches**.
+- **Compare performance:** open Vehicle models, Branches, Representatives or Lead
+  sources directly, then choose a relevant measure. For example, **Branches →
+  Resolved conversion**.
 - **Monthly trends:** see a measure across months and inspect each month's records.
 - **Active pipeline:** review open opportunities and their age.
 - **Deliveries:** review delivery output, duration and recorded delays.
@@ -100,7 +104,7 @@ use **Reset** when you want to clear all filters.
 
 ### Narrow the view further
 
-Use **More filters** on the dashboard, or **Filters** on the operational pages,
+Use **More filters** in the shared toolbar on any page
 to narrow results by options such as lead source, vehicle model or lead status.
 
 Filters work together. The complete active scope is written below the selected period,
@@ -167,6 +171,9 @@ as of the dataset date. Start here when planning a follow-up discussion with the
 It is a review list, not proof that a representative has done something wrong.
 
 **Tip:** Select a card's information icon for its specific definition.
+Select the card itself or **View records** to inspect the records behind its value.
+For **Target attainment**, choose **View breakdown** to inspect actual deliveries
+and the supplied targets by branch and month.
 
 ## 5. Read “Deliveries vs target”
 
@@ -238,7 +245,8 @@ a discussion, not as the only basis for judging an employee.
 
 ## 8. Review active opportunities
 
-Open **Active opportunities** to understand unfinished sales.
+Choose **Active pipeline** in the navigation to open the **Active opportunities**
+page and understand unfinished sales.
 
 - **Pipeline by stage** shows where open opportunities currently sit.
 - **Inactivity distribution** shows how long it has been since recorded activity.
@@ -259,7 +267,8 @@ the date filter rather than assuming one selected month contains every active le
 
 ## 9. Review delivery performance
 
-Open **Delivery performance** to see how long recorded deliveries took and where
+Choose **Deliveries** in the navigation to open **Delivery performance** and see
+how long recorded deliveries took and where
 delays are associated with branches, vehicles or recorded reasons.
 
 Use it to ask which delivery processes deserve a closer look. A reason being linked
@@ -276,6 +285,12 @@ this comparison is an indicator to investigate, not a confirmed promise-breach c
 Open a supporting-record list, then select a customer. The detail view can show
 contact information, vehicle, current status, assigned branch/representative,
 expected-close date, last activity and recorded status history.
+
+On a wide screen, the list stays on the left and the selected customer's details
+appear on the right. The highlighted row and detail heading identify the same
+customer. On smaller screens, the panels stack inside the same dialog. Select
+another row to change the details, or use **Clear selected record** to return to
+the list view. **Close evidence** closes the whole dialog.
 
 Use the history to understand what has already happened. A listed value has no
 assumed currency unless the source data establishes one.
@@ -349,6 +364,8 @@ information. The website is not a live feed of today's dealership activity.
 
 ## 13. If something looks wrong
 
+- **The old layout still appears after an update:** refresh the page again. The
+  browser may need a second reload to use the newly downloaded application.
 - **The figures changed unexpectedly:** check the period, branch, representative
   and More filters. Use Reset to return to the broad view.
 - **A target disappeared:** check whether a representative, source, model or status
@@ -366,48 +383,62 @@ You do not need the developer handbook for normal use. The main habit is simple:
 check the date and filters, inspect the evidence, and agree a clear next action with
 the team.
 
-## 14. Answer a specific question with the performance tabs
+<a id="14-answer-a-specific-question-with-the-performance-tabs"></a>
 
-Use **Overview**, **Comparisons**, **Monthly trends** or **Follow-up lists** from
+## 14. Answer a specific question with the performance views
+
+Use **Overview**, a subject under **Compare performance**, **Monthly trends** or
+**Follow-up lists** from
 the sidebar or phone menu. Your branch, representative, source, model, status
-and date filters stay applied. Use **Filters** to change them. The current tab and
-data filters stay in the URL and survive refresh. Measure, comparison group and
-sort choices stay selected while switching between the three exploration tabs;
-they reset after a refresh or a visit to Overview.
+and date filters stay applied. Use the period/branch controls and **More filters**
+to change them. The current view and
+data filters stay in the URL and survive refresh. Presentation-only measure and
+order choices return to the destination default after refresh.
 
-In **Comparisons**, first select a visible measure from **Sales**, **Conversion**,
-**Pipeline**, or **Losses & delivery**. Then select **Vehicle models**, **Branches**,
-**Representatives**, or **Lead sources** under **Compare by**. There are no measure
-or group dropdowns to open. On smaller screens these choices wrap onto more rows.
+Open **Vehicle models**, **Branches**, **Representatives**, or **Lead sources**
+directly. Each destination starts with a sensible measure and offers a short row
+of relevant measure buttons. Open **More measures** for other supported measures.
+On smaller screens these choices wrap onto more rows. Defaults are Delivered
+vehicles for models, Resolved conversion for branches and representatives, and
+Lead demand for sources. Switching subjects starts that subject's default.
+
+For two specific groups, open **Ranking details & compare two**, enable **Compare
+two**, then select First group and Second group. Badges and ranks still refer to
+the whole filtered comparison. Changing filters resets the pair selection.
 
 ### “Which car sold the most? Which sold the least?”
 
-1. Choose **Comparisons → Delivered vehicles → Vehicle models**.
-2. Choose **Highest first** or **Lowest first**. Choose **All results** to see every model.
+1. Choose **Vehicle models → Delivered vehicles** under Compare performance.
+2. Choose **Highest first** or **Lowest first**. Choose **All** to see every model.
 3. Click a model's bar to inspect its delivery records.
 
 Sales counts use delivery dates. A model with zero deliveries has no delivery list.
 To ask about value instead, select **Delivered deal value**. Value is not profit.
 
-### “Which branch or salesperson performed best for a particular vehicle?”
+### “Which branch or representative stands out for a particular vehicle?”
 
-1. Open **Filters** and choose the vehicle model and period.
-2. In Comparisons choose the measure: deliveries, delivered value, or resolved conversion.
-3. Choose **Branches** or **Representatives** under **Compare by**.
+1. Choose the period in the toolbar and the vehicle model under **More filters**.
+2. Open **Branches** or **Representatives** under **Compare performance**.
+3. Choose deliveries or resolved conversion, or open **More measures** for delivered deal value.
 4. For rates, read the eligible/resolved lead count and any immature-cohort warning.
 
 You can use the same steps with a lead-source filter. Clear a branch filter to
-compare representatives across the network. There is no unexplained “best overall” score.
+compare representatives across the network. There is no unexplained “best overall”
+score. Rank 1 means the highest recorded value for the selected measure; the
+adjacent badge explains whether that is favourable, warrants investigation, or is
+context only.
 
-### “Compare two branches, models, sources or representatives.”
+### “Compare branches, models, sources or representatives.”
 
-1. Choose the measure and comparison group.
-2. Enable **Compare two**, then select **A** and **B**.
-3. Switch measures to check demand, value, conversion, inactivity or delivery speed.
-4. Open the supporting records for either group.
+1. Open the subject under **Compare performance**.
+2. Choose one of the visible measures and Highest first or Lowest first.
+3. Use **Show** to expand the result set when required.
+4. Open the supporting records for any result.
 
-Both groups use the same filters and period. Higher is not always better; fewer
-delivery days or less stale value may be preferable.
+All results use the same filters and period. Higher is not always better; precise
+badges distinguish, for example, **Most deliveries** from **Longest median delivery
+time**. Rates show their eligible sample, small samples are not promoted as
+extremes, ties share a rank, and equal results do not create a winner.
 
 ### “Are sales, enquiries or conversion changing over time?”
 

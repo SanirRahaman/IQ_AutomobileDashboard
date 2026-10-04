@@ -1,8 +1,52 @@
 # Verification records
 
 These are dated results, not a live test status. The latest section records the
-workspace and appearance checks; the original finishing-pass record is retained
+production release checks; the original finishing-pass record is retained
 below for historical context.
+
+## Comparison navigation and compact overview — 4 October 2026
+
+- `flutter test --no-pub --reporter expanded`: all 112 tests passed.
+- `flutter analyze`: no issues found on 4 October.
+- The production web build succeeded on 3 October after the final UI changes.
+- The overview uses six cards per row at 1100 pixels of available content width,
+  with three, two or one column at smaller widths. Cards within a row align.
+- Direct comparison routes, filter restoration and ranking support are covered
+  by tests. Small samples matching supported extremes cannot inherit badges.
+- Browser checks on 3 October covered desktop comparisons, branch scope,
+  refresh, Back/Forward, and tablet supporting-record panels. The CSV download
+  control was exercised, but the browser download event could not be captured;
+  export content remains covered by automated tests.
+- Documentation and DECISIONS.md describe the new sidebar, compact overview,
+  descriptive badges, More measures and optional two-group comparison.
+
+## Production release — 26 September 2026
+
+- UI and documentation commit `8c7403e` and deployment dependency fix `3c9514a`
+  were pushed to GitHub `main`. Local and remote HEAD matched `3c9514a`; the working
+  directory was clean at completion.
+- The lockfile was aligned with the pinned Flutter 3.24.4 SDK. Local
+  `flutter pub get --enforce-lockfile` passed and `flutter analyze --no-pub`
+  reported no issues. No analytics or raw-data changes were made for deployment.
+- GitHub triggered Vercel automatically. Deployment
+  `dpl_F1vgfAPEFbsTyV5djMYnrDc1KtpX` reached **Ready** for commit `3c9514a`;
+  GitHub's Vercel status reported **success**. Vercel reported a 2m 14s build.
+- Production URL: [iq-automobile-dashboard.vercel.app](https://iq-automobile-dashboard.vercel.app/).
+  The README already contains this URL.
+- HTTP checks returned 200 for `/`, `/main.dart.js`,
+  `/assets/assets/data/dealership_data.json` and `/explore/trends`.
+- Browser inspection confirmed the new sidebar and dark appearance. Refreshing
+  `/#/explore/trends?branch=B1` restored Monthly trends with Downtown Toyota selected.
+- The first refresh showed cached old UI; a second refresh showed the new release.
+  This is why browser checks follow deployment status checks.
+
+The 103-test result below belongs to the implementation pass. Tests were not rerun
+during deployment; the lockfile correction restored the dependencies used for those
+checks. Production checks did not repeat the full responsive or CSV-download suite.
+
+Documentation was synchronized on 28 September 2026 using these recorded results
+and the current source. This documentation-only update did not rerun Flutter checks
+or verify a new production deployment.
 
 ## Workspace and appearance — 26 September 2026
 
@@ -29,8 +73,8 @@ Verified locally using Flutter 3.24.4:
 
 Analytics and raw data were unchanged. Existing analytics, routing and export
 regressions remain in the full suite. No new CSV download, production deployment,
-or complete screen-reader/browser compatibility audit was performed. The code and
-updated guides remain local at this checkpoint. Browser appearance persists only
+or complete screen-reader/browser compatibility audit was performed in this local
+implementation pass. The later deployment is recorded above. Browser appearance persists only
 where local storage is available; the app remains usable when storage is blocked.
 
 ## Performance tabs — 25 September 2026

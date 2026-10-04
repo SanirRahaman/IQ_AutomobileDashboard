@@ -294,7 +294,7 @@ not a promise about future edits. The verification record separates the passes.
 
 ## 19. Show the comparison choices before asking users to choose
 
-**Decision:** Replace the small Explore performance entry button with four visible
+**Earlier iteration (25 September):** Replace the small Explore performance entry button with four visible
 main tabs. Replace the measure and comparison-group dropdowns with visible buttons.
 
 **Why:** A manager should see what can be compared without opening menus to discover
@@ -306,7 +306,10 @@ All 17 measures remain available, organised into four labelled groups.
 so the results may require vertical scrolling. Only the chosen comparison is drawn;
 the screen does not display 17 charts at once.
 
-**State decision:** Each main section has its own URL. The three explorer tabs
+Decision 20 replaces these main tabs with sidebar navigation; the visible measure
+and comparison-group buttons remain.
+
+**State decision:** Each main section has its own URL. The three explorer views
 share a page identity, so measure/group/sort selections stay in place between them.
 Refresh restores the section and data filters, but resets those local choices.
 Visiting Overview also resets the explorer choices. No analytical formula changes.
@@ -343,6 +346,25 @@ both themes, text contrast, navigation and phone/tablet/desktop reflow.
 `yoyota_dealers_app.dart`, `platform/preferences*.dart` and
 `test/features/application_shell_test.dart`.
 
+## 21. Keep deployment reproducible
+
+**Decision:** Publish the static Flutter Web app through Vercel's GitHub connection.
+Pushes to `main` build the production website. Pin Flutter 3.24.4 and keep
+`pubspec.lock` compatible with it.
+
+**Why:** Vercel does not supply Flutter by default. The build script installs the
+known SDK, checks its commit and refuses an incompatible lockfile. This catches
+dependency drift before publishing. The 26 September release included a lockfile
+correction after a newer local SDK had resolved different dependencies.
+
+**Trade-off:** A clean build must download Flutter. The deployment script runs the
+analyzer and release build, while the developer must run tests before pushing.
+The browser can retain the older app in its service-worker cache, so verification
+must check the visible UI and route refresh after Vercel reports Ready.
+
+**Where:** `scripts/vercel-build.sh`, `vercel.json`, `pubspec.lock` and
+[Verification records](VERIFICATION.md).
+
 ## Before changing a decision
 
 Ask: What manager question changes? Which records belong in the calculation? What
@@ -350,5 +372,26 @@ is the denominator and time basis? What happens for missing data and active lead
 Which tests and documentation must change? If the answer changes analytical meaning,
 update the central service and analytics specification together.
 
-Deployment and a formal `DECISIONS.md` remain separate work. This explanatory guide
-does not change application behaviour or authorize deployment.
+The workspace UI was deployed on 26 September 2026. This guide explains the
+implementation in detail. The shorter, first-person [assignment decisions](../DECISIONS.md)
+cover what I built, tradeoffs, observed patterns and what I would do next.
+
+## 22. Open comparisons directly and keep the overview compact — 3 October 2026
+
+**Decision:** Move comparison subjects into the sidebar: Vehicle models, Branches,
+Representatives and Lead sources. Each starts with results and five common
+measures. More measures retains all existing metrics; Ranking details & compare
+two retains pair comparison. This supersedes the subject-selector workflow above.
+
+**Why:** The user wanted fewer selections before seeing useful results. The
+overview is now Business overview, with smaller cards and the first two findings
+near the top. Targets and findings share a row when space permits.
+
+**Trade-off:** Less common controls and additional findings require expansion.
+Switching subjects resets the measure and sort; data filters still carry across
+views and the URL restores destinations and filters.
+
+**Safeguard:** Badges describe a particular measure, not an overall best person
+or branch. Higher risk gets an attention treatment. Tiny samples cannot inherit
+a supported result's badge. Equal or single-item comparisons have no extreme
+badge. These are presentation rules; the underlying metrics remain unchanged.

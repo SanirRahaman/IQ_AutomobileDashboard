@@ -34,17 +34,17 @@ void main() {
   });
   test('exploration page restores its filters and retains the route on reset',
       () async {
-    r.go('/explore');
+    r.go('/compare/models');
     c.setBranch('B1');
     c.setVehicleModel('Model A');
     final uri = r.currentConfiguration;
-    expect(uri.path, '/explore');
+    expect(uri.path, '/compare/models');
     final fresh = AnalysisController(dataset: c.dataset);
     final router = AnalysisRouter(fresh);
     await router.setNewRoutePath(uri);
     expect(fresh.filters, c.filters);
     fresh.reset();
-    expect(router.currentConfiguration.toString(), '/explore');
+    expect(router.currentConfiguration.toString(), '/compare/models');
     router.dispose();
     fresh.dispose();
   });
@@ -68,6 +68,33 @@ void main() {
       expect(fresh.filters.branchId, 'B1');
       fresh.reset();
       expect(router.currentConfiguration.path, path);
+      router.dispose();
+      fresh.dispose();
+    });
+  }
+  for (final path in [
+    '/compare/models',
+    '/compare/branches',
+    '/compare/representatives',
+    '/compare/sources',
+  ]) {
+    test('$path restores destination and supported filters', () async {
+      c.setBranch('B1');
+      c.setSource('web');
+      r.go(path);
+      final saved = r.currentConfiguration;
+      r.go('/delivery');
+      await r.setNewRoutePath(saved);
+      expect(r.currentConfiguration.path, path);
+      expect(c.filters.branchId, 'B1');
+      expect(c.filters.source, 'web');
+
+      final fresh = AnalysisController(dataset: c.dataset);
+      final router = AnalysisRouter(fresh);
+      await router.setNewRoutePath(saved);
+      expect(router.currentConfiguration, saved);
+      expect(fresh.filters.branchId, 'B1');
+      expect(fresh.filters.source, 'web');
       router.dispose();
       fresh.dispose();
     });

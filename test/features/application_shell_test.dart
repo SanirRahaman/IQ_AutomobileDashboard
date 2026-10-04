@@ -58,7 +58,7 @@ void main() {
       await tester.pumpWidget(YoyotaDealersApp(controller: controller));
       await tester.pumpAndSettle();
       final appearance =
-          AppearanceScope.of(tester.element(find.text('Sales performance')));
+          AppearanceScope.of(tester.element(find.text('Business overview')));
       expect(appearance.mode, ThemeMode.system);
       Future<void> choose(String name) async {
         await tester.tap(find.byKey(const Key('appearance-menu')));
@@ -69,7 +69,7 @@ void main() {
 
       await choose('Dark');
       expect(
-          Theme.of(tester.element(find.text('Sales performance'))).brightness,
+          Theme.of(tester.element(find.text('Business overview'))).brightness,
           Brightness.dark);
       expect(controller.results.overview.activeLeads, 1);
       if (width >= 1200) {
@@ -93,11 +93,11 @@ void main() {
           Brightness.dark);
       expect(find.byKey(const Key('evidence-lead-active')), findsOneWidget);
       if (width < 760) {
-        final export = tester.widget<IconButton>(
-            find.byKey(const Key('export-follow-up')));
-        final scheme = Theme.of(tester.element(
-                find.byKey(const Key('export-follow-up'))))
-            .colorScheme;
+        final export = tester
+            .widget<IconButton>(find.byKey(const Key('export-follow-up')));
+        final scheme =
+            Theme.of(tester.element(find.byKey(const Key('export-follow-up'))))
+                .colorScheme;
         expect(export.style?.foregroundColor?.resolve({}), scheme.onPrimary);
       }
       await tester.tap(find.byTooltip('Close evidence'));
@@ -105,13 +105,15 @@ void main() {
       await choose('Light');
       expect(appearance.mode, ThemeMode.light);
       expect(
-          Theme.of(tester.element(find.text('Sales performance'))).brightness,
+          Theme.of(tester.element(find.byKey(const Key('appearance-menu'))))
+              .brightness,
           Brightness.light);
       await choose('System');
       tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
       await tester.pumpAndSettle();
       expect(
-          Theme.of(tester.element(find.text('Sales performance'))).brightness,
+          Theme.of(tester.element(find.byKey(const Key('appearance-menu'))))
+              .brightness,
           Brightness.dark);
       expect(tester.takeException(), isNull);
     });

@@ -70,39 +70,20 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Wrap(
-                              alignment: WrapAlignment.spaceBetween,
-                              spacing: 16,
-                              runSpacing: 6,
-                              children: [
-                                Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text('Sales performance',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headlineSmall),
-                                      Text(_viewData.scopeLabel),
-                                      Text(_viewData.scopeSummary,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium),
-                                    ]),
-                                Tooltip(
-                                    message:
-                                        'Latest recorded lead, activity, status, order or delivery event. Ages and overdue alerts use this date, not today.',
-                                    child: Text(
-                                        'Data as of ${DashboardPresenter.formatDate(widget.controller.results.performance.snapshot)}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium)),
-                              ]),
-                          const SizedBox(height: 12),
+                          Text('Business overview',
+                              style: Theme.of(context).textTheme.headlineSmall),
+                          const SizedBox(height: 2),
+                          Text(
+                              'Dealership performance across opportunities, sales, supplied targets, pipeline, follow-up and deliveries.',
+                              style: Theme.of(context).textTheme.bodyMedium),
+                          Text(
+                              '${_viewData.scopeLabel} · ${_viewData.scopeSummary}',
+                              style: Theme.of(context).textTheme.bodyMedium),
+                          const SizedBox(height: 8),
                           _PulseGrid(
                               metrics: _viewData.pulse,
                               onPressed: _showMetricRecords),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 6),
                           Wrap(spacing: 8, runSpacing: 4, children: [
                             if (widget.controller.filters.branchId != null)
                               TextButton.icon(
@@ -126,42 +107,32 @@ class _DashboardPageState extends State<DashboardPage> {
                                   label: Text(
                                       '${widget.controller.validationReport.issues.length} data-quality notices')),
                           ]),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 10),
                           const _SectionHeading(
                             eyebrow: 'MANAGEMENT PRIORITIES',
                             title: 'What needs attention',
                             description:
                                 'Ranked findings show the observed gap, business exposure, evidence, and next investigation step.',
                           ),
-                          const SizedBox(height: 12),
-                          _AttentionGrid(
-                              insights: _viewData.insights.take(3).toList(),
-                              onInvestigate: _showInsightEvidence),
-                          if (_viewData.insights.length > 3)
-                            ExpansionTile(
-                                tilePadding:
-                                    const EdgeInsets.symmetric(horizontal: 4),
-                                title: Text(
-                                    '${_viewData.insights.length - 3} additional supported findings'),
-                                children: [
-                                  _AttentionGrid(
-                                      insights:
-                                          _viewData.insights.skip(3).toList(),
-                                      onInvestigate: _showInsightEvidence)
-                                ]),
-                          const SizedBox(height: 24),
-                          _ResponsivePair(
-                            first: TargetPanel(
-                                controller: widget.controller, compact: true),
-                            second: _OperationsPanel(
-                              data: _viewData.operations,
-                              onPipelinePressed: () =>
-                                  AppNavigation.go(context, '/pipeline'),
-                              onDeliveryPressed: () =>
-                                  AppNavigation.go(context, '/delivery'),
+                          const SizedBox(height: 10),
+                          _PriorityOverview(
+                            target: TargetPanel(
+                              controller: widget.controller,
+                              compact: true,
+                              onViewDetails: _showTargetBreakdown,
                             ),
+                            insights: _viewData.insights,
+                            onInvestigate: _showInsightEvidence,
                           ),
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 18),
+                          _OperationsPanel(
+                            data: _viewData.operations,
+                            onPipelinePressed: () =>
+                                AppNavigation.go(context, '/pipeline'),
+                            onDeliveryPressed: () =>
+                                AppNavigation.go(context, '/delivery'),
+                          ),
+                          const SizedBox(height: 26),
                           if (!_viewData.hasResults)
                             _NoResultsState(onReset: widget.controller.reset)
                           else ...[
@@ -319,6 +290,9 @@ class _DashboardPageState extends State<DashboardPage> {
           : const {},
     );
   }
+
+  void _showTargetBreakdown() => showTargetBreakdownDialog(
+      context: context, performance: widget.controller.results.performance);
 
   void _showInsightEvidence(ManagementInsight insight) {
     _showEvidenceDialog(
@@ -627,25 +601,32 @@ class _PulseGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      final columns = constraints.maxWidth >= 980
-          ? 3
+      final columns = constraints.maxWidth >= 1100
+          ? 6
           : constraints.maxWidth >= 660
               ? 3
               : constraints.maxWidth >= 320
                   ? 2
                   : 1;
-      final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
-      return Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        children: metrics
-            .map((metric) => SizedBox(
-                  width: width,
-                  child: _PulseCard(
-                      metric: metric, onPressed: () => onPressed(metric)),
-                ))
-            .toList(),
-      );
+      return Column(children: [
+        for (var start = 0; start < metrics.length; start += columns) ...[
+          if (start > 0) const SizedBox(height: 8),
+          IntrinsicHeight(
+            child:
+                Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              for (var offset = 0; offset < columns; offset++) ...[
+                if (offset > 0) const SizedBox(width: 12),
+                Expanded(
+                    child: start + offset < metrics.length
+                        ? _PulseCard(
+                            metric: metrics[start + offset],
+                            onPressed: () => onPressed(metrics[start + offset]))
+                        : const SizedBox.shrink()),
+              ],
+            ]),
+          ),
+        ],
+      ]);
     });
   }
 }
@@ -661,7 +642,7 @@ class _PulseCard extends StatelessWidget {
           key: Key('kpi-${metric.kind.name}'),
           onTap: onPressed,
           child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(11, 9, 11, 10),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -697,13 +678,13 @@ class _PulseCard extends StatelessWidget {
                         style: Theme.of(context)
                             .textTheme
                             .headlineSmall
-                            ?.copyWith(fontSize: 25)),
-                    const SizedBox(height: 5),
+                            ?.copyWith(fontSize: 23)),
+                    const SizedBox(height: 3),
                     Text(metric.context,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium),
-                    const SizedBox(height: 7),
+                    const SizedBox(height: 4),
                     Text(
                         metric.kind == PulseMetricKind.target
                             ? 'View breakdown →'
@@ -713,6 +694,58 @@ class _PulseCard extends StatelessWidget {
                             .labelMedium
                             ?.copyWith(color: context.colors.info)),
                   ]))));
+}
+
+class _PriorityOverview extends StatelessWidget {
+  const _PriorityOverview({
+    required this.target,
+    required this.insights,
+    required this.onInvestigate,
+  });
+
+  final Widget target;
+  final List<ManagementInsight> insights;
+  final ValueChanged<ManagementInsight> onInvestigate;
+
+  @override
+  Widget build(BuildContext context) {
+    final findings = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _AttentionGrid(
+          insights: insights.take(2).toList(growable: false),
+          onInvestigate: onInvestigate,
+        ),
+        if (insights.length > 2)
+          ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+            title: Text('${insights.length - 2} additional supported findings'),
+            children: [
+              _AttentionGrid(
+                insights: insights.skip(2).toList(growable: false),
+                onInvestigate: onInvestigate,
+              ),
+            ],
+          ),
+      ],
+    );
+    return LayoutBuilder(builder: (context, constraints) {
+      if (constraints.maxWidth < 940) {
+        return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              target,
+              const SizedBox(height: 12),
+              findings,
+            ]);
+      }
+      return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        SizedBox(width: 300, child: target),
+        const SizedBox(width: 14),
+        Expanded(child: findings),
+      ]);
+    });
+  }
 }
 
 class _AttentionGrid extends StatelessWidget {

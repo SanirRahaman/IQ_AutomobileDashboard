@@ -1,7 +1,9 @@
 # Architecture
 
-The `/explore`, `/explore/trends` and `/explore/follow-up` routes provide comparison,
-trend and record-list views without another router or data store.
+The `/compare/models`, `/compare/branches`, `/compare/representatives`,
+`/compare/sources`, `/explore/trends` and `/explore/follow-up` routes provide
+comparison, trend and record-list views without another router or data store.
+`/explore` remains a compatibility alias for the vehicle-model comparison.
 `AnalysisController.explore` prepares dimension and date scopes;
 `analytics/services/performance_explorer.dart` calculates reusable typed comparison
 rows and monthly series using the existing engine. `exploration_presenter.dart`
@@ -16,7 +18,23 @@ consume that order. Business calculations stay out of chart widgets.
 
 `yoyotaDealers` is a Flutter Web decision-support application. The Dart package is named `yoyota_dealers` because Dart package identifiers cannot contain uppercase letters.
 
-The initial deployment is a static web application. The canonical dealership JSON is bundled as an asset and processed locally; no backend is required.
+The production deployment is a static web application on Vercel. The canonical
+dealership JSON is bundled as an asset and processed in the user's browser; no
+backend is required.
+
+## Production build and delivery
+
+GitHub `SanirRahaman/IQ_AutomobileDashboard` supplies the `main` branch to Vercel
+project `sanir1/iq-automobile-dashboard`. `scripts/vercel-build.sh` installs Flutter
+3.24.4, checks the official SDK commit, enforces `pubspec.lock`, runs the analyzer
+and produces `build/web`. Tests are a pre-push check, not part of this build script.
+The lockfile must stay compatible with that SDK.
+
+`vercel.json` sets the build/output paths and serves `index.html` for application
+paths while preserving asset requests. The Flutter router uses hash URLs such as
+`/#/explore/trends?branch=B1`. Cache headers request revalidation, but a previously
+installed Flutter service worker can still show the old app until another reload.
+Deployment verification includes actual browser startup and filtered-route refresh.
 
 ## Dependency direction
 
@@ -165,8 +183,9 @@ radii, typography, cards, buttons, chips, tables, tooltips, and dialogs. Feature
 widgets reuse these primitives instead of introducing local visual languages.
 
 `ApplicationShell` wraps every route with one navigation area, top bar and shared
-`DashboardFilterToolbar`. It exposes Overview, Comparisons, Monthly trends,
-Active pipeline, Deliveries and Follow-up lists. At 1200 pixels it uses an expanded
+`DashboardFilterToolbar`. It exposes Overview; direct Vehicle models, Branches,
+Representatives and Lead sources comparisons; Monthly trends; Active pipeline;
+Deliveries; and Follow-up lists. At 1200 pixels it uses an expanded
 sidebar (which can collapse); from 760 pixels it uses an icon rail; below that it
 uses a menu drawer. Breakpoints use actual available width. Inner pages receive
 the remaining content width so their tables and cards reflow correctly.
@@ -179,12 +198,28 @@ semantic colours to widgets and chart painters, while `buildAppTheme` styles
 Material controls, overlays, tables and both loading/error states. Appearance does
 not change the analysis controller or filter URL.
 
-Explorer locations are `/explore`,
-`/explore/trends` and `/explore/follow-up`. They share a Navigator page identity,
-preserving local measure/group/sort state across those tabs. The existing router
-continues to own URLs and filter restoration; refreshing restores the section
-and data filters, with default local presentation choices. Visiting Overview also
-disposes the explorer's local presentation state. Reset clears filters while
-retaining the current route. The grouped measure
-chips in the explorer presenter are presentation metadata only; all calculations
-remain in the existing analytics services.
+Explorer locations are `/compare/models`, `/compare/branches`,
+`/compare/representatives`, `/compare/sources`, `/explore/trends` and
+`/explore/follow-up`. They share a Navigator page identity. The existing router
+continues to own URLs and filter restoration; refreshing restores the destination
+and data filters, with a sensible dimension-specific default measure. Reset clears
+filters while retaining the current route. The compact measure choices and ranking
+metadata in the explorer presenter are presentation metadata only; all business
+calculations remain in the existing analytics services.
+
+Comparison ranking is descriptive. Rank 1 means the highest recorded value for the
+selected measure, not the universally "best" entity. Exact badges state the
+measure direction, such as **Most deliveries**, **Highest resolved conversion**,
+or **Longest median delivery time**. Rates require at least ten eligible records
+and delivery-duration comparisons require at least eight deliveries before an
+extreme badge is shown. Ties share a rank; equal results, unavailable values, and
+a single comparable item do not produce a winner badge. Pipeline risk, losses, and
+longer delivery durations use an investigation treatment, while demand and active
+value remain neutral because their desirability depends on context. Sample size,
+cohort-maturity qualifications, and evidence links remain visible.
+
+The five primary measure choices per subject are a shortcut, not an analytics
+restriction: More measures exposes the rest of ComparisonMetric. Two-group
+selection is under Ranking details & compare two and resets when filters or the
+subject change. Badges are assigned only to eligible rows; an unsupported row
+matching a supported extreme's value receives neither rank nor badge.

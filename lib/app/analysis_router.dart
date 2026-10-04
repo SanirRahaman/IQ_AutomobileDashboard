@@ -87,9 +87,10 @@ class AnalysisRouter extends RouterDelegate<Uri>
     final parts = _uri.pathSegments;
     final key = ValueKey(_uri.toString());
     final explorationSection = PerformanceSection.values
-        .where((section) => section != PerformanceSection.overview)
-        .where((section) => section.path == _uri.path)
-        .firstOrNull;
+            .where((section) => section != PerformanceSection.overview)
+            .where((section) => section.path == _uri.path)
+            .firstOrNull ??
+        (_uri.path == '/explore' ? PerformanceSection.compareModels : null);
     Widget page;
     if (parts.length == 2 && parts.first == 'branch') {
       page = BranchDetailPage(
@@ -117,11 +118,12 @@ class AnalysisRouter extends RouterDelegate<Uri>
     }
     return Navigator(
       key: navigatorKey,
-      // The three explorer sections share one page so measure/group choices
-      // survive tab changes, including browser Back and Forward.
+      // Exploration destinations share one page. The route selects the
+      // comparison subject while the controller restores supported filters.
       pages: [
         MaterialPage<void>(
-            key: ValueKey(explorationSection == null ? _uri.path : '/explore'),
+            key: ValueKey(
+                explorationSection == null ? _uri.path : '/performance'),
             child: ApplicationShell(
                 controller: controller, path: _uri.path, child: page))
       ],

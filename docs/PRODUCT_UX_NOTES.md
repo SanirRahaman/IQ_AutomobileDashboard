@@ -38,34 +38,37 @@ targets, or currency are inferred from the supplied data. Delivery events and
 lead-creation cohorts have separate, visible definitions. Partial months are not
 presented as completed target failures. Unfinished opportunities remain active.
 
-## Visible performance navigation — 25 September 2026
+## Direct comparison navigation — 3 October 2026
 
-The small Explore performance button and its comparison dropdowns hid the available
-questions. The interface now exposes **Overview · Comparisons · Monthly trends ·
-Follow-up lists** near the Sales performance heading. These share the existing
-routes and filters rather than introducing another navigation system.
+The persistent sidebar exposes Vehicle models, Branches, Representatives and Lead
+sources beneath **Compare performance**. Each destination opens immediately with
+populated results and a useful default measure. A compact row of visible measure
+buttons, with More measures and an expandable two-group comparison, replaces the redundant compare-by workflow. Results repeat the selected
+measure, period and filters, while representative comparisons disclose branch
+restrictions and retain branch context.
 
-Comparisons asks for the measure first, then who to compare. All 17 measures are
-visible in four labelled groups: Sales, Conversion, Pipeline, and Losses & delivery.
-Vehicle models, Branches, Representatives and Lead sources are visible selection
-buttons underneath. For example: **Comparisons → Resolved conversion → Branches**.
-The selected measure and group are repeated in the results heading.
+Rank numbers describe the selected measure rather than assigning an overall score.
+Exact text badges explain the extreme, support thresholds prevent tiny samples
+from becoming winners, ties share ranks, and equal or single-item comparisons do
+not create winner badges. Risk-oriented highs use an investigation treatment;
+demand and active-value differences remain neutral. Evidence stays available from
+each result.
 
-Selected controls use text/checkmarks as well as the existing brand colour.
-Controls wrap at smaller widths instead of requiring horizontal scrolling.
-The trade-off is more vertical space, especially on phones; results follow below
-the choices. Existing bars, ranking controls, two-group comparison, evidence and
-exports remain available. Analytical definitions and source data are unchanged.
-
-The section and data filters survive refresh through the URL. Measure/group/sort
-choices persist between the three explorer tabs, but reset after refresh or a
-visit to Overview. This distinction is explained in the user guide.
+The overview is titled **Business overview** and describes only the operations
+supported by the data: opportunities, sales, supplied targets, pipeline, follow-up
+and deliveries. The scorecard is denser, and compact target context sits beside
+the first actionable findings where width allows. Detailed target records and
+remaining findings stay one action away. Analytical definitions and source data
+are unchanged.
 
 ## Shared workspace and appearance — 26 September 2026
 
-The main tab strip is now a persistent sidebar with six destinations, including
-pipeline and deliveries. It becomes an icon rail on tablets and a drawer on phones.
-Comparison measures and dimensions remain visible in the page. A shared top bar
+Released to production on 26 September in UI commit `8c7403e`, followed by
+deployment dependency fix `3c9514a`. See [Verification records](VERIFICATION.md).
+
+The main tab strip is now a persistent grouped sidebar, including direct comparison,
+pipeline and delivery destinations. It becomes an icon rail on tablets and a drawer
+on phones. Relevant comparison measures remain visible in each page. A shared top bar
 and filter toolbar keep page context, historical snapshot and scope discoverable.
 
 Light, Dark and System share semantic colours, labelled statuses and existing

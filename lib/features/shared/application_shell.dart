@@ -6,19 +6,41 @@ import '../../application/analysis/analysis_controller.dart';
 import '../dashboard/dashboard_page.dart';
 import '../dashboard/dashboard_view_data.dart';
 
-const _destinations = [
+const _overviewDestination = (
+  label: 'Overview',
+  path: '/',
+  icon: Icons.dashboard_outlined,
+  key: 'overview'
+);
+
+const _comparisonDestinations = [
   (
-    label: 'Overview',
-    path: '/',
-    icon: Icons.dashboard_outlined,
-    key: 'overview'
+    label: 'Vehicle models',
+    path: '/compare/models',
+    icon: Icons.directions_car_outlined,
+    key: 'models'
   ),
   (
-    label: 'Comparisons',
-    path: '/explore',
-    icon: Icons.bar_chart,
-    key: 'comparisons'
+    label: 'Branches',
+    path: '/compare/branches',
+    icon: Icons.store_outlined,
+    key: 'branches'
   ),
+  (
+    label: 'Representatives',
+    path: '/compare/representatives',
+    icon: Icons.groups_outlined,
+    key: 'representatives'
+  ),
+  (
+    label: 'Lead sources',
+    path: '/compare/sources',
+    icon: Icons.campaign_outlined,
+    key: 'sources'
+  ),
+];
+
+const _monitorDestinations = [
   (
     label: 'Monthly trends',
     path: '/explore/trends',
@@ -45,6 +67,12 @@ const _destinations = [
   ),
 ];
 
+const _destinations = [
+  _overviewDestination,
+  ..._comparisonDestinations,
+  ..._monitorDestinations,
+];
+
 /// One responsive workspace around all existing route content.
 class ApplicationShell extends StatelessWidget {
   const ApplicationShell(
@@ -68,11 +96,13 @@ class ApplicationShell extends StatelessWidget {
     final detail = path.startsWith('/branch/') || path.startsWith('/rep/');
     final title =
         _destinations.where((d) => d.path == path).firstOrNull?.label ??
-            (path.startsWith('/rep/')
-                ? 'Representative performance'
-                : path.startsWith('/branch/')
-                    ? 'Branch performance'
-                    : 'Workspace');
+            (path == '/explore'
+                ? 'Vehicle models'
+                : path.startsWith('/rep/')
+                    ? 'Representative performance'
+                    : path.startsWith('/branch/')
+                        ? 'Branch performance'
+                        : 'Workspace');
     final branch = controller.dataset.branches
         .where((b) => b.id == controller.filters.branchId)
         .firstOrNull;
@@ -114,7 +144,7 @@ class ApplicationShell extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
                   child: Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('SALES WORKSPACE',
+                      child: Text('DEALERSHIP PERFORMANCE',
                           style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
@@ -124,64 +154,16 @@ class ApplicationShell extends StatelessWidget {
                 child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     children: [
-                  for (final d in _destinations)
-                    Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Tooltip(
-                            message: wide ? '' : d.label,
-                            child: Semantics(
-                                selected:
-                                    path == d.path || detail && d.path == '/',
-                                child: Material(
-                                    color: path == d.path ||
-                                            detail && d.path == '/'
-                                        ? context.colors.brandSoft
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: InkWell(
-                                        key: Key('performance-nav-${d.key}'),
-                                        borderRadius: BorderRadius.circular(8),
-                                        onTap: () {
-                                          if (inDrawer) {
-                                            Navigator.of(context).pop();
-                                          }
-                                          if (path != d.path) {
-                                            AppNavigation.go(context, d.path);
-                                          }
-                                        },
-                                        child: Padding(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: wide ? 12 : 0,
-                                                vertical: 14),
-                                            child: Row(
-                                                mainAxisAlignment: wide
-                                                    ? MainAxisAlignment.start
-                                                    : MainAxisAlignment.center,
-                                                children: [
-                                                  Icon(d.icon,
-                                                      size: 21,
-                                                      color: path == d.path ||
-                                                              detail &&
-                                                                  d.path == '/'
-                                                          ? context.colors.brand
-                                                          : context
-                                                              .colors.muted),
-                                                  if (wide) ...[
-                                                    const SizedBox(width: 12),
-                                                    Expanded(
-                                                        child: Text(d.label,
-                                                            style: TextStyle(
-                                                                fontSize: 13,
-                                                                color: context
-                                                                    .colors.ink,
-                                                                fontWeight: path ==
-                                                                        d.path
-                                                                    ? FontWeight
-                                                                        .w700
-                                                                    : FontWeight
-                                                                        .w500)))
-                                                  ]
-                                                ])))))))
+                  _navigationItem(context, _overviewDestination,
+                      wide: wide, inDrawer: inDrawer, detail: detail),
+                  _navigationLabel(context, 'COMPARE PERFORMANCE', wide),
+                  for (final d in _comparisonDestinations)
+                    _navigationItem(context, d,
+                        wide: wide, inDrawer: inDrawer, detail: detail),
+                  _navigationLabel(context, 'MONITOR & ACT', wide),
+                  for (final d in _monitorDestinations)
+                    _navigationItem(context, d,
+                        wide: wide, inDrawer: inDrawer, detail: detail),
                 ])),
             if (width >= 1200 && !inDrawer)
               Padding(
@@ -299,5 +281,77 @@ class ApplicationShell extends StatelessWidget {
         ])),
       ])),
     );
+  }
+
+  Widget _navigationLabel(BuildContext context, String label, bool wide) => wide
+      ? Padding(
+          padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+          child: Text(label,
+              style: TextStyle(
+                  color: context.colors.muted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0)))
+      : const Divider(height: 18);
+
+  Widget _navigationItem(
+    BuildContext context,
+    ({IconData icon, String key, String label, String path}) destination, {
+    required bool wide,
+    required bool inDrawer,
+    required bool detail,
+  }) {
+    final legacySelected =
+        path == '/explore' && destination.path == '/compare/models';
+    final selected = path == destination.path ||
+        legacySelected ||
+        detail && destination.path == '/';
+    return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Tooltip(
+            message: wide ? '' : destination.label,
+            child: Semantics(
+                selected: selected,
+                child: Material(
+                    color: selected
+                        ? context.colors.brandSoft
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    child: InkWell(
+                        key: Key('performance-nav-${destination.key}'),
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () {
+                          if (inDrawer) {
+                            Navigator.of(context).pop();
+                          }
+                          if (path != destination.path) {
+                            AppNavigation.go(context, destination.path);
+                          }
+                        },
+                        child: Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: wide ? 12 : 0, vertical: 14),
+                            child: Row(
+                                mainAxisAlignment: wide
+                                    ? MainAxisAlignment.start
+                                    : MainAxisAlignment.center,
+                                children: [
+                                  Icon(destination.icon,
+                                      size: 21,
+                                      color: selected
+                                          ? context.colors.brand
+                                          : context.colors.muted),
+                                  if (wide) ...[
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                        child: Text(destination.label,
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: context.colors.ink,
+                                                fontWeight: selected
+                                                    ? FontWeight.w700
+                                                    : FontWeight.w500)))
+                                  ]
+                                ])))))));
   }
 }

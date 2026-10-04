@@ -13,7 +13,7 @@ class ExplorationPage extends StatefulWidget {
   const ExplorationPage({
     super.key,
     required this.controller,
-    this.section = PerformanceSection.comparisons,
+    this.section = PerformanceSection.compareModels,
   });
   final AnalysisController controller;
   final PerformanceSection section;
@@ -22,8 +22,8 @@ class ExplorationPage extends StatefulWidget {
 }
 
 class _ExplorationPageState extends State<ExplorationPage> {
-  ComparisonDimension _dimension = ComparisonDimension.model;
-  ComparisonMetric _metric = ComparisonMetric.deliveries;
+  late ComparisonDimension _dimension;
+  late ComparisonMetric _metric;
   ComparisonMetric _trendMetric = ComparisonMetric.deliveries;
   late PerformanceExploration _data;
   bool _ascending = false;
@@ -35,6 +35,9 @@ class _ExplorationPageState extends State<ExplorationPage> {
   @override
   void initState() {
     super.initState();
+    _dimension =
+        widget.section.comparisonDimension ?? ComparisonDimension.model;
+    _metric = defaultComparisonMetric(_dimension);
     _load();
     widget.controller.addListener(_refresh);
   }
@@ -43,7 +46,21 @@ class _ExplorationPageState extends State<ExplorationPage> {
     _data = widget.controller.explore(_dimension);
     _a = 0;
     _b = _data.rows.length > 1 ? 1 : 0;
+    _compare = false;
     _month = math.max(0, _data.months.length - 1);
+  }
+
+  @override
+  void didUpdateWidget(covariant ExplorationPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final requested = widget.section.comparisonDimension;
+    if (requested != null && requested != _dimension) {
+      _dimension = requested;
+      _metric = defaultComparisonMetric(requested);
+      _ascending = false;
+      _limit = 5;
+      _load();
+    }
   }
 
   void _refresh() => setState(_load);
@@ -69,11 +86,18 @@ class _ExplorationPageState extends State<ExplorationPage> {
   @override
   Widget build(BuildContext context) => OperationsScaffold(
       controller: widget.controller,
-      title: 'Sales performance',
-      question:
-          'Compare the measure that matters, follow its trend, then open the supporting records.',
+      title: widget.section.isComparison
+          ? 'Compare ${_dimension.label.toLowerCase()}'
+          : widget.section == PerformanceSection.trends
+              ? 'Monthly performance trends'
+              : 'Follow-up lists',
+      question: widget.section.isComparison
+          ? 'Rank the selected measure, understand its support, and open the records behind each result.'
+          : widget.section == PerformanceSection.trends
+              ? 'How are supported dealership measures changing across comparable months?'
+              : 'Which scoped records should the team verify or act on?',
       body: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        if (widget.section == PerformanceSection.comparisons) _comparisons(),
+        if (widget.section.isComparison) _comparisons(),
         if (widget.section == PerformanceSection.trends) _trends(),
         if (widget.section == PerformanceSection.followUp) _followUp(),
         const SizedBox(height: 20),
@@ -88,153 +112,153 @@ class _ExplorationPageState extends State<ExplorationPage> {
       ]));
 
   Widget _comparisons() {
-    final ranked = _data.ranked(_metric, ascending: _ascending);
-    final shown = _compare && _data.rows.isNotEmpty
-        ? [_data.rows[_a], if (_a != _b) _data.rows[_b]]
-        : (_limit == null ? ranked : ranked.take(_limit!).toList());
-    final maximum = shown.fold<double>(
-        0, (m, r) => math.max(m, (r.value(_metric) ?? 0).abs().toDouble()));
+    final ranking = presentComparisonRanking(
+        data: _data, metric: _metric, ascending: _ascending);
+    final shown = _compare && _data.rows.length >= 2
+        ? ranking.rows
+            .where((row) =>
+                identical(row.slice, _data.rows[_a]) ||
+                identical(row.slice, _data.rows[_b]))
+            .toList(growable: false)
+        : _limit == null
+            ? ranking.rows
+            : ranking.rows.take(_limit!).toList(growable: false);
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _measureTabs(),
-      const SizedBox(height: 16),
-      Text('2. Compare by', style: Theme.of(context).textTheme.titleMedium),
-      const SizedBox(height: 6),
-      Wrap(spacing: 8, runSpacing: 4, children: [
-        for (final dimension in ComparisonDimension.values)
-          ChoiceChip(
-            key: Key('explore-dimension-${dimension.name}'),
-            label: Text(dimension.label),
-            selected: _dimension == dimension,
-            selectedColor: context.colors.brandSoft,
-            onSelected: (_) {
-              if (_dimension == dimension) return;
-              setState(() {
-                _dimension = dimension;
-                _load();
-              });
-            },
-          ),
-      ]),
-      const SizedBox(height: 16),
+      const SizedBox(height: 14),
       Text('${_metric.label} by ${_dimension.label.toLowerCase()}',
           style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: 6),
       Text(_metric.definition),
-      const SizedBox(height: 12),
-      Wrap(spacing: 12, runSpacing: 12, children: [
-        _select<bool>(
-            'Order',
-            _ascending,
-            const [false, true],
-            (b) => b ? 'Lowest first' : 'Highest first',
-            (b) => setState(() => _ascending = b),
-            key: 'explore-order'),
-        _select<int>(
-            'Show',
-            _limit ?? 0,
-            const [5, 10, 0],
-            (i) => i == 0 ? 'All results' : '$i results',
-            (i) => setState(() => _limit = i == 0 ? null : i),
-            key: 'explore-limit'),
-      ]),
+      const SizedBox(height: 6),
+      Text(_scopeNote(), style: Theme.of(context).textTheme.bodyMedium),
       const SizedBox(height: 12),
       Wrap(
-          spacing: 12,
+          spacing: 20,
           runSpacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            FilterChip(
-                label: const Text('Compare two'),
-                selected: _compare,
-                onSelected: _data.rows.length < 2
-                    ? null
-                    : (b) => setState(() => _compare = b)),
+            _CompactOptions<bool>(
+                label: 'Order',
+                value: _ascending,
+                values: const [false, true],
+                valueLabel: (value) => value ? 'Lowest first' : 'Highest first',
+                onChanged: (value) => setState(() => _ascending = value),
+                keyPrefix: 'explore-order'),
+            _CompactOptions<int>(
+                label: 'Show',
+                value: _limit ?? 0,
+                values: const [5, 10, 0],
+                valueLabel: (value) => value == 0 ? 'All' : '$value',
+                onChanged: (value) =>
+                    setState(() => _limit = value == 0 ? null : value),
+                keyPrefix: 'explore-limit'),
             Text(
-                '${_data.rows.length} groups · current-view ${_metric.label.toLowerCase()}: ${_metric.format(_data.total.value(_metric))}'),
+                '${_data.rows.length} ${_data.rows.length == 1 ? 'group' : 'groups'} · current-view ${_metric.label.toLowerCase()}: ${_metric.format(_data.total.value(_metric))}'),
           ]),
-      if (_compare && _data.rows.length >= 2) ...[
-        const SizedBox(height: 12),
-        Wrap(spacing: 12, runSpacing: 12, children: [
-          _select<int>('A', _a, List.generate(_data.rows.length, (i) => i),
-              (i) => _data.rows[i].label, (i) => setState(() => _a = i),
-              key: 'compare-a'),
-          _select<int>('B', _b, List.generate(_data.rows.length, (i) => i),
-              (i) => _data.rows[i].label, (i) => setState(() => _b = i),
-              key: 'compare-b'),
-        ]),
-      ],
+      const SizedBox(height: 10),
+      ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        title: const Text('Ranking details & compare two'),
+        children: [
+          Text(ranking.explanation),
+          FilterChip(
+            label: const Text('Compare two'),
+            selected: _compare,
+            onSelected: _data.rows.length < 2
+                ? null
+                : (value) => setState(() => _compare = value),
+          ),
+          if (_compare && _data.rows.length >= 2)
+            Wrap(spacing: 12, runSpacing: 12, children: [
+              _select<int>(
+                  'First group',
+                  _a,
+                  List.generate(_data.rows.length, (i) => i),
+                  (i) => _data.rows[i].label,
+                  (i) => setState(() => _a = i),
+                  key: 'compare-a'),
+              _select<int>(
+                  'Second group',
+                  _b,
+                  List.generate(_data.rows.length, (i) => i),
+                  (i) => _data.rows[i].label,
+                  (i) => setState(() => _b = i),
+                  key: 'compare-b'),
+              const Text(
+                  'Ranks and badges refer to the full filtered comparison, not just these two groups.'),
+            ]),
+        ],
+      ),
       const SizedBox(height: 16),
       if (shown.isEmpty) const Text('No groups match the current filters.'),
-      Card(
-          clipBehavior: Clip.antiAlias,
-          child: Column(children: [
-            for (final row in shown)
-              _ComparisonBar(
-                  label: row.label,
-                  value: _metric.format(row.value(_metric)),
-                  contextLabel: sampleLabel(row, _metric),
-                  fraction: maximum == 0
-                      ? 0
-                      : (row.value(_metric) ?? 0).abs() / maximum,
-                  onTap: row.evidence(_metric).isEmpty
-                      ? null
-                      : () => _evidence(row, _metric)),
-          ])),
-      if (_compare && shown.length == 2) ...[
-        const SizedBox(height: 12),
-        const Text(
-            'Both groups use the same filters and period. Select another measure to compare volume, value, conversion and pipeline health. Higher is not always better—for example, delivery duration and stale value.'),
-      ],
+      if (shown.isNotEmpty)
+        Card(
+            clipBehavior: Clip.antiAlias,
+            child: Column(children: [
+              for (final row in shown)
+                _ComparisonBar(
+                    data: row,
+                    value: _metric.format(row.slice.value(_metric)),
+                    onTap: row.slice.evidence(_metric).isEmpty
+                        ? null
+                        : () => _evidence(row.slice, _metric)),
+            ])),
     ]);
   }
 
-  Widget _measureTabs() => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('1. Choose a measure',
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            for (final group in comparisonMeasureGroups.indexed) ...[
-              if (group.$1 > 0) const Divider(height: 16),
-              LayoutBuilder(builder: (context, constraints) {
-                final label = Text(group.$2.label,
-                    style: Theme.of(context).textTheme.labelLarge);
-                final choices = Wrap(spacing: 6, runSpacing: 2, children: [
-                  for (final metric in group.$2.metrics)
-                    Tooltip(
-                      message: metric.definition,
-                      child: ChoiceChip(
-                        key: Key('explore-metric-${metric.name}'),
-                        label: Text(metric.label),
-                        selected: _metric == metric,
-                        selectedColor: context.colors.brandSoft,
-                        onSelected: (_) => setState(() => _metric = metric),
-                      ),
-                    ),
-                ]);
-                if (constraints.maxWidth < 900) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [label, const SizedBox(height: 4), choices],
-                  );
-                }
-                return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                          width: 140,
-                          child: Padding(
-                              padding: const EdgeInsets.only(top: 14),
-                              child: label)),
-                      Expanded(child: choices),
-                    ]);
-              }),
-            ],
-          ]),
-        ),
-      );
+  Widget _measureTabs() {
+    final primary = comparisonMetricsFor(_dimension);
+    Widget choices(Iterable<ComparisonMetric> metrics) =>
+        Wrap(spacing: 7, runSpacing: 7, children: [
+          for (final metric in metrics)
+            Tooltip(
+              message: metric.definition,
+              child: ChoiceChip(
+                key: Key('explore-metric-${metric.name}'),
+                label: Text(metric.label),
+                selected: _metric == metric,
+                selectedColor: context.colors.brandSoft,
+                onSelected: (_) => setState(() => _metric = metric),
+              ),
+            ),
+        ]);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('Measure', style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 7),
+      choices(primary),
+      ExpansionTile(
+        key: ValueKey('more-measures-${_dimension.name}'),
+        tilePadding: EdgeInsets.zero,
+        title: Text(primary.contains(_metric)
+            ? 'More measures'
+            : 'More measures · ${_metric.label}'),
+        children: [
+          choices(ComparisonMetric.values.where((m) => !primary.contains(m)))
+        ],
+      ),
+    ]);
+  }
+
+  String _scopeNote() {
+    final filters = widget.controller.filters;
+    if (_dimension == ComparisonDimension.representative &&
+        filters.branchId != null) {
+      final branch = widget.controller.dataset.branches
+          .where((item) => item.id == filters.branchId)
+          .map((item) => item.name)
+          .firstOrNull;
+      return 'Scope restriction: representatives assigned to ${branch ?? filters.branchId} within the active filters.';
+    }
+    if (_dimension == ComparisonDimension.representative &&
+        filters.repId == null) {
+      return 'Representatives are shown with branch context. Select a branch to compare within one team.';
+    }
+    if (_data.rows.length == 1) {
+      return 'Only one comparison group remains in the active filters; rankings need at least two supported results.';
+    }
+    return 'All rows use the same visible period and active filters.';
+  }
 
   Widget _trends() {
     const metrics = [
@@ -302,7 +326,7 @@ class _ExplorationPageState extends State<ExplorationPage> {
                     ]))),
       const SizedBox(height: 12),
       const Text(
-          'Active and stale values are available in Comparisons. Historical pipeline trends are not reconstructed from this extract.'),
+          'Active and stale values are available in the sidebar comparison views. Historical pipeline trends are not reconstructed from this extract.'),
     ]);
   }
 
@@ -361,48 +385,132 @@ class _ExplorationPageState extends State<ExplorationPage> {
 
 class _ComparisonBar extends StatelessWidget {
   const _ComparisonBar(
-      {required this.label,
-      required this.value,
-      required this.contextLabel,
-      required this.fraction,
-      required this.onTap});
-  final String label, value, contextLabel;
-  final double fraction;
+      {required this.data, required this.value, required this.onTap});
+  final RankedComparisonViewData data;
+  final String value;
   final VoidCallback? onTap;
+
   @override
-  Widget build(BuildContext context) => InkWell(
-      onTap: onTap,
-      child: Padding(
-          padding: const EdgeInsets.all(16),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                spacing: 12,
-                runSpacing: 4,
+  Widget build(BuildContext context) {
+    final (accent, soft) = switch (data.tone) {
+      ComparisonRankTone.positive => (
+          context.colors.positive,
+          context.colors.positiveSoft
+        ),
+      ComparisonRankTone.attention => (
+          context.colors.warning,
+          context.colors.warningSoft
+        ),
+      ComparisonRankTone.neutral => (
+          context.colors.info,
+          context.colors.infoSoft
+        ),
+      null => (context.colors.info, context.colors.canvas),
+    };
+    return InkWell(
+        hoverColor: context.colors.canvas,
+        focusColor: context.colors.infoSoft,
+        onTap: onTap,
+        child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(label, style: Theme.of(context).textTheme.titleMedium),
-                  Text(value, style: Theme.of(context).textTheme.titleMedium),
-                ]),
-            const SizedBox(height: 8),
-            ExcludeSemantics(
-                child: LinearProgressIndicator(
-                    value: fraction,
-                    minHeight: 6,
-                    color: context.colors.info,
-                    backgroundColor: context.colors.canvas)),
-            const SizedBox(height: 6),
-            Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                spacing: 12,
-                runSpacing: 4,
-                children: [
-                  Text(contextLabel),
-                  if (onTap != null)
-                    Text('View records →',
-                        style: TextStyle(color: context.colors.info)),
-                ]),
-          ])));
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    SizedBox(
+                        width: 36,
+                        child: Text(
+                            data.rank == null
+                                ? '—'
+                                : data.rankTied
+                                    ? '=${data.rank}'
+                                    : '#${data.rank}',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(color: context.colors.muted))),
+                    Expanded(
+                        child: Text(data.slice.label,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium)),
+                    const SizedBox(width: 12),
+                    Text(value,
+                        textAlign: TextAlign.right,
+                        style: Theme.of(context).textTheme.titleMedium),
+                  ]),
+                  if (data.badge != null) ...[
+                    const SizedBox(height: 7),
+                    Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                                color: soft,
+                                borderRadius: BorderRadius.circular(999)),
+                            child: Text(data.badge!,
+                                style: TextStyle(
+                                    color: accent,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700)))),
+                  ],
+                  const SizedBox(height: 8),
+                  ExcludeSemantics(
+                      child: LinearProgressIndicator(
+                          value: data.fraction,
+                          minHeight: 5,
+                          color: accent,
+                          backgroundColor: context.colors.canvas)),
+                  const SizedBox(height: 6),
+                  Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      spacing: 12,
+                      runSpacing: 4,
+                      children: [
+                        Text(data.supportLabel,
+                            style: Theme.of(context).textTheme.bodyMedium),
+                        if (onTap != null)
+                          Text('View supporting records →',
+                              style: TextStyle(color: context.colors.info)),
+                      ]),
+                ])));
+  }
+}
+
+class _CompactOptions<T> extends StatelessWidget {
+  const _CompactOptions({
+    required this.label,
+    required this.value,
+    required this.values,
+    required this.valueLabel,
+    required this.onChanged,
+    required this.keyPrefix,
+  });
+
+  final String label;
+  final T value;
+  final List<T> values;
+  final String Function(T) valueLabel;
+  final ValueChanged<T> onChanged;
+  final String keyPrefix;
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+        spacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text('$label:', style: Theme.of(context).textTheme.labelMedium),
+          for (final option in values)
+            ChoiceChip(
+              key: Key('$keyPrefix-$option'),
+              visualDensity: VisualDensity.compact,
+              label: Text(valueLabel(option)),
+              selected: option == value,
+              onSelected: (_) => onChanged(option),
+            ),
+        ],
+      );
 }
 
 class _MonthlyChart extends StatelessWidget {

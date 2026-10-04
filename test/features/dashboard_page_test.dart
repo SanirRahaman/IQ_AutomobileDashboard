@@ -133,7 +133,7 @@ void main() {
       await tester.pumpWidget(YoyotaDealersApp(controller: controller));
       await tester.pumpAndSettle();
 
-      expect(find.text('Sales performance'), findsOneWidget);
+      expect(find.text('Business overview'), findsOneWidget);
       expect(find.text('Target attainment'), findsOneWidget);
       expect(find.text('What needs attention'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -157,8 +157,8 @@ void main() {
     addTearDown(controller.dispose);
     await tester.pumpWidget(YoyotaDealersApp(controller: controller));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('kpi-target')));
-    await tester.tap(find.byKey(const Key('kpi-target')));
+    await tester.ensureVisible(find.byKey(const Key('compact-target-details')));
+    await tester.tap(find.byKey(const Key('compact-target-details')));
     await tester.pumpAndSettle();
     expect(find.text('25.0% attained'), findsWidgets);
     expect(
@@ -289,7 +289,7 @@ void main() {
     await tester.pumpAndSettle();
 
     AppNavigation.go(
-        tester.element(find.text('Sales performance')), '/pipeline');
+        tester.element(find.text('Business overview')), '/pipeline');
     await tester.pumpAndSettle();
     expect(find.text('Active opportunities'), findsOneWidget);
     expect(find.text('Pipeline by stage'), findsOneWidget);
@@ -307,7 +307,7 @@ void main() {
     await tester.pumpAndSettle();
 
     AppNavigation.go(
-        tester.element(find.text('Sales performance')), '/delivery');
+        tester.element(find.text('Business overview')), '/delivery');
     await tester.pumpAndSettle();
     expect(find.text('Delivery performance'), findsOneWidget);
     expect(find.text('Delivery-duration distribution'), findsOneWidget);

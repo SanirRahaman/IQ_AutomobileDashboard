@@ -27,7 +27,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(controller.filters.branchId, branch);
     expect(controller.filters.dateRange!.start, DateTime.utc(2025, 1, 1));
-    expect(find.text('Sales performance'), findsOneWidget);
+    expect(find.text('Business overview'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     final refreshed = AnalysisController(dataset: dataset);
     await tester.pumpWidget(YoyotaDealersApp(
@@ -56,7 +56,7 @@ void main() {
     expect(find.text('The dataset could not be loaded'), findsOneWidget);
     await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
-    expect(find.text('Sales performance'), findsOneWidget);
+    expect(find.text('Business overview'), findsOneWidget);
     expect(controller.filters.branchId, dataset.branches.first.id);
   });
 
@@ -67,6 +67,6 @@ void main() {
     addTearDown(controller.dispose);
     await tester.pumpWidget(YoyotaDealersApp(controller: controller));
     await tester.pumpAndSettle();
-    expect(find.text('Sales performance'), findsOneWidget);
+    expect(find.text('Business overview'), findsOneWidget);
   });
 }

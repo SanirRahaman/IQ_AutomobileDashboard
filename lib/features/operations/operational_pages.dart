@@ -261,6 +261,8 @@ class OperationsScaffold extends StatelessWidget {
                             style: Theme.of(context).textTheme.titleMedium),
                         Text(
                             '${DashboardPresenter.formatDate(controller.results.performance.start)} – ${DashboardPresenter.formatDate(controller.results.performance.end)}'),
+                        Text(DashboardPresenter.formatScopeSummary(controller),
+                            style: Theme.of(context).textTheme.bodyMedium),
                         const SizedBox(height: 8),
                         Text(title,
                             style: Theme.of(context).textTheme.displaySmall),
