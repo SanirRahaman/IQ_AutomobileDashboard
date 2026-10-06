@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../analytics/services/management_performance.dart';
 import '../../app/app_theme.dart';
+import '../shared/dashboard_icons.dart';
 import 'dashboard_view_data.dart';
 
 Future<void> showTargetBreakdownDialog({
@@ -24,8 +25,12 @@ Future<void> showTargetBreakdownDialog({
                       padding: const EdgeInsets.fromLTRB(20, 16, 8, 12),
                       child: Row(children: [
                         Expanded(
-                            child: Text('Target attainment breakdown',
-                                style: Theme.of(context).textTheme.titleLarge)),
+                            child: IconHeading(
+                          icon: DashboardIcons.target,
+                          label: 'Target attainment breakdown',
+                          style: Theme.of(context).textTheme.titleLarge,
+                          color: context.colors.ink,
+                        )),
                         IconButton(
                             tooltip: 'Close target breakdown',
                             onPressed: () => Navigator.pop(context),

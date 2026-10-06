@@ -76,3 +76,26 @@ branding. Browser storage saves appearance only. Cards, tables, charts, menus an
 supporting-record panels follow the same palette. There are no decorative gauges,
 fake account controls or new analytics. The sidebar can collapse on desktop; inner
 page breakpoints use the width remaining after navigation.
+
+## Shared visual vocabulary — 6 October 2026
+
+`features/shared/dashboard_icons.dart` is the presentation-level source of truth
+for dealership concepts such as leads, deliveries, active value, conversion,
+targets, follow-up, branches, representatives, sources, vehicles, timing and
+supporting records. Concept icons identify what information represents; existing
+typed severity and ranking treatments separately communicate whether it is
+favourable, neutral or worth investigation. Important icons retain visible labels,
+and icon-only controls retain tooltips and semantic labels.
+
+The six Business overview cards use one row whenever the post-sidebar content width
+is at least 900 pixels, which covers 1280, 1366 and 1440 pixel desktop windows with
+the expanded sidebar. Cards reflow to three, two or one column as their actual
+available width decreases. The management-priority section uses two finding columns
+from 620 pixels so target context and both leading findings appear earlier without
+shrinking typography or introducing horizontal scrolling.
+
+Icons supplement the existing text rather than replacing it. For example, the car
+identifies delivered vehicles, the target identifies attainment, and the records
+icon identifies evidence actions. Neither the icon nor its colour changes the
+meaning of a metric. The historical snapshot remains in the shared footer;
+definitions and supporting-record actions remain available on each summary card.

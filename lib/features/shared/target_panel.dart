@@ -4,6 +4,7 @@ import '../../application/analysis/analysis_controller.dart';
 import '../../app/analysis_router.dart';
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_view_data.dart';
+import 'dashboard_icons.dart';
 
 class TargetPanel extends StatelessWidget {
   const TargetPanel({
@@ -27,8 +28,12 @@ class TargetPanel extends StatelessWidget {
                 children: [
                   Row(children: [
                     Expanded(
-                        child: Text('Deliveries vs target',
-                            style: Theme.of(context).textTheme.titleLarge)),
+                        child: IconHeading(
+                      icon: DashboardIcons.target,
+                      label: 'Deliveries vs target',
+                      style: Theme.of(context).textTheme.titleLarge,
+                      color: context.colors.ink,
+                    )),
                     Tooltip(
                         message:
                             'Actuals use delivery dates, matched to supplied branch-month unit targets. Missing or duplicate targets are excluded from both sides. Targets are not assigned to representatives or prorated. The extract may not cover all business behind the supplied targets.',
@@ -57,9 +62,19 @@ class TargetPanel extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium),
                     Text(total.status),
                     if (total.missingMonths > 0)
-                      Text(
-                          '${total.missingMonths} branch-month targets missing or ambiguous; excluded.',
-                          style: TextStyle(color: context.colors.warning)),
+                      Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(DashboardIcons.dataQuality,
+                                size: 16, color: context.colors.warning),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                  '${total.missingMonths} branch-month targets missing or ambiguous; excluded.',
+                                  style:
+                                      TextStyle(color: context.colors.warning)),
+                            ),
+                          ]),
                     const SizedBox(height: 8),
                     if (!compact) ...[
                       ...performance.branches.map((row) => _TargetRow(
@@ -78,7 +93,7 @@ class TargetPanel extends StatelessWidget {
                       TextButton.icon(
                           key: const Key('compact-target-details'),
                           onPressed: onViewDetails,
-                          icon: const Icon(Icons.open_in_new, size: 16),
+                          icon: const Icon(DashboardIcons.target, size: 16),
                           label: const Text('View target breakdown')),
                     ],
                   ],

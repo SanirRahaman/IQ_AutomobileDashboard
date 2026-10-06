@@ -9,6 +9,7 @@ import '../../application/analysis/evidence_order.dart';
 import '../../app/app_theme.dart';
 import '../../data/models/dealership_models.dart';
 import '../dashboard/dashboard_view_data.dart';
+import '../shared/dashboard_icons.dart';
 
 Future<void> showEvidenceListDialog({
   required BuildContext context,
@@ -155,6 +156,15 @@ class _EvidenceListDialogState extends State<_EvidenceListDialog> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      ConceptIcon(
+                        icon: DashboardIcons.records,
+                        semanticLabel: 'Supporting records',
+                        color: context.colors.brand,
+                        backgroundColor: context.colors.brandSoft,
+                        size: 18,
+                        boxSize: 32,
+                      ),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,7 +247,8 @@ class _EvidenceListDialogState extends State<_EvidenceListDialog> {
                           : FilledButton.icon(
                               key: const Key('export-follow-up'),
                               onPressed: () => _save(activeCsv),
-                              icon: const Icon(Icons.download, size: 18),
+                              icon:
+                                  const Icon(DashboardIcons.download, size: 18),
                               label: Text(
                                   'Download follow-up (${activeCsv.count})')),
                     compact
@@ -247,13 +258,13 @@ class _EvidenceListDialogState extends State<_EvidenceListDialog> {
                                 'Download all ${allCsv.count} records · CSV',
                             onPressed:
                                 allCsv.count == 0 ? null : () => _save(allCsv),
-                            icon: const Icon(Icons.download),
+                            icon: const Icon(DashboardIcons.download),
                           )
                         : OutlinedButton.icon(
                             key: const Key('export-records'),
                             onPressed:
                                 allCsv.count == 0 ? null : () => _save(allCsv),
-                            icon: const Icon(Icons.download, size: 18),
+                            icon: const Icon(DashboardIcons.download, size: 18),
                             label: Text('All ${allCsv.count} records · CSV')),
                   ]);
                 })),
@@ -503,6 +514,15 @@ class _LeadEvidencePanel extends StatelessWidget {
             border: Border(bottom: BorderSide(color: context.colors.border)),
           ),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            ConceptIcon(
+              icon: DashboardIcons.records,
+              semanticLabel: 'Selected supporting record',
+              color: context.colors.brand,
+              backgroundColor: context.colors.brandSoft,
+              size: 18,
+              boxSize: 32,
+            ),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,8 +548,12 @@ class _LeadEvidencePanel extends StatelessWidget {
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             if (delivery != null) ...[
-              Text('Delivery record',
-                  style: Theme.of(context).textTheme.titleMedium),
+              IconHeading(
+                icon: DashboardIcons.delivery,
+                label: 'Delivery record',
+                style: Theme.of(context).textTheme.titleMedium,
+                color: context.colors.ink,
+              ),
               const SizedBox(height: 10),
               _DetailGrid(items: [
                 (
@@ -557,13 +581,26 @@ class _LeadEvidencePanel extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: context.colors.border),
                 ),
-                child: Text('Included because $inclusionReason',
-                    style: Theme.of(context).textTheme.bodyMedium),
+                child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.fact_check_outlined,
+                          size: 17, color: context.colors.info),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text('Included because $inclusionReason',
+                            style: Theme.of(context).textTheme.bodyMedium),
+                      ),
+                    ]),
               ),
               const SizedBox(height: 16),
             ],
-            Text('Lead details',
-                style: Theme.of(context).textTheme.titleMedium),
+            IconHeading(
+              icon: DashboardIcons.leads,
+              label: 'Lead details',
+              style: Theme.of(context).textTheme.titleMedium,
+              color: context.colors.ink,
+            ),
             const SizedBox(height: 10),
             _DetailGrid(items: [
               ('Phone', record.lead.phone),
@@ -588,20 +625,24 @@ class _LeadEvidencePanel extends StatelessWidget {
                     ? null
                     : () =>
                         navigateTo('/branch/${Uri.encodeComponent(branch.id)}'),
-                icon: const Icon(Icons.store_outlined, size: 17),
+                icon: const Icon(DashboardIcons.branch, size: 17),
                 label: Text(branch?.name ?? record.branchId),
               ),
               OutlinedButton.icon(
                 onPressed: rep == null
                     ? null
                     : () => navigateTo('/rep/${Uri.encodeComponent(rep.id)}'),
-                icon: const Icon(Icons.person_outline, size: 17),
+                icon: const Icon(DashboardIcons.representative, size: 17),
                 label: Text(rep?.name ?? record.repId),
               ),
             ]),
             const SizedBox(height: 22),
-            Text('Complete status timeline',
-                style: Theme.of(context).textTheme.titleMedium),
+            IconHeading(
+              icon: Icons.history,
+              label: 'Complete status timeline',
+              style: Theme.of(context).textTheme.titleMedium,
+              color: context.colors.ink,
+            ),
             const SizedBox(height: 12),
             ...record.lead.statusHistory.indexed.map((item) => _TimelineEntry(
                   entry: item.$2,

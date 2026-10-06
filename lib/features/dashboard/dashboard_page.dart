@@ -8,6 +8,7 @@ import '../../application/analysis/analysis_filters.dart';
 import '../../app/app_theme.dart';
 import '../../insights/models/management_insight.dart';
 import '../investigation/lead_evidence_dialog.dart';
+import '../shared/dashboard_icons.dart';
 import 'dashboard_view_data.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -113,6 +114,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             title: 'What needs attention',
                             description:
                                 'Ranked findings show the observed gap, business exposure, evidence, and next investigation step.',
+                            icon: DashboardIcons.followUp,
                           ),
                           const SizedBox(height: 10),
                           _PriorityOverview(
@@ -138,6 +140,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           else ...[
                             _SectionHeading(
                               eyebrow: 'SALES JOURNEY',
+                              icon: DashboardIcons.funnel,
                               title: _showFullJourney
                                   ? 'Full sales journey'
                                   : 'Management gates',
@@ -165,6 +168,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             const SizedBox(height: 36),
                             const _SectionHeading(
                               eyebrow: 'BRANCH PERFORMANCE',
+                              icon: DashboardIcons.branch,
                               title: 'How branch health differs',
                               description:
                                   'Compare outcomes and follow-up; open a branch to review its representatives.',
@@ -182,6 +186,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             const SizedBox(height: 36),
                             _ResponsivePair(
                               first: _DiagnosticPanel(
+                                icon: DashboardIcons.source,
                                 title: 'Lead sources',
                                 subtitle:
                                     'Volume, contact, resolved, and post-contact performance.',
@@ -191,6 +196,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ),
                               ),
                               second: _DiagnosticPanel(
+                                icon: DashboardIcons.vehicle,
                                 title: 'Vehicle demand and sales',
                                 subtitle:
                                     'Demand share, conversion, and delivered-value contribution.',
@@ -202,6 +208,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             const SizedBox(height: 36),
                             _DiagnosticPanel(
+                              icon: DashboardIcons.trend,
                               title: 'Conversion by lead month',
                               subtitle:
                                   'Direction over time by lead-arrival month. Immature recent groups remain visibly qualified.',
@@ -225,7 +232,12 @@ class _DashboardPageState extends State<DashboardPage> {
     showDialog<void>(
         context: context,
         builder: (c) => AlertDialog(
-                title: const Text('Data-quality notices'),
+                title: IconHeading(
+                  icon: DashboardIcons.dataQuality,
+                  label: 'Data-quality notices',
+                  style: Theme.of(c).textTheme.titleLarge,
+                  color: context.colors.warning,
+                ),
                 content: SizedBox(
                     width: 560,
                     child: SingleChildScrollView(
@@ -236,11 +248,23 @@ class _DashboardPageState extends State<DashboardPage> {
                           const Text(
                               'Source records are unchanged. Review these notices before relying on affected fields.'),
                           const SizedBox(height: 12),
-                          ...widget.controller.validationReport.issues.map(
-                              (issue) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 10),
-                                  child: Text(
-                                      '${issue.severity.name.toUpperCase()} · ${issue.message}'))),
+                          ...widget.controller.validationReport.issues
+                              .map((issue) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Icon(DashboardIcons.dataQuality,
+                                              size: 16,
+                                              color: context.colors.warning),
+                                          const SizedBox(width: 7),
+                                          Expanded(
+                                            child: Text(
+                                                '${issue.severity.name.toUpperCase()} · ${issue.message}'),
+                                          ),
+                                        ]),
+                                  )),
                         ]))),
                 actions: [
                   TextButton(
@@ -563,11 +587,13 @@ class _SectionHeading extends StatelessWidget {
     required this.eyebrow,
     required this.title,
     required this.description,
+    this.icon,
   });
 
   final String eyebrow;
   final String title;
   final String description;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -584,7 +610,16 @@ class _SectionHeading extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 5),
-        Text(title, style: Theme.of(context).textTheme.headlineSmall),
+        if (icon == null)
+          Text(title, style: Theme.of(context).textTheme.headlineSmall)
+        else
+          IconHeading(
+            icon: icon!,
+            label: title,
+            style: Theme.of(context).textTheme.headlineSmall,
+            color: context.colors.ink,
+            iconSize: 21,
+          ),
         const SizedBox(height: 5),
         Text(description, style: Theme.of(context).textTheme.bodyMedium),
       ],
@@ -601,7 +636,7 @@ class _PulseGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      final columns = constraints.maxWidth >= 1100
+      final columns = constraints.maxWidth >= 900
           ? 6
           : constraints.maxWidth >= 660
               ? 3
@@ -646,33 +681,48 @@ class _PulseCard extends StatelessWidget {
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(children: [
-                      Expanded(
-                          child: Text(metric.label,
-                              style: Theme.of(context).textTheme.bodyMedium)),
-                      Tooltip(
-                          message: metric.helper,
-                          child: IconButton(
-                              visualDensity: VisualDensity.compact,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                  minWidth: 24, minHeight: 24),
-                              tooltip: metric.helper,
-                              onPressed: () => showDialog<void>(
-                                  context: context,
-                                  builder: (c) => AlertDialog(
-                                          title: Text(metric.label),
-                                          content: Text(metric.helper),
-                                          actions: [
-                                            TextButton(
-                                                key: const Key(
-                                                    'metric-help-close'),
-                                                onPressed: () =>
-                                                    Navigator.pop(c),
-                                                child: const Text('Close'))
-                                          ])),
-                              icon: const Icon(Icons.info_outline, size: 15)))
-                    ]),
+                    Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ConceptIcon(
+                            icon: DashboardIcons.pulse(metric.kind),
+                            semanticLabel: metric.label,
+                            color: context.colors.brand,
+                            backgroundColor: context.colors.brandSoft,
+                            size: 16,
+                            boxSize: 26,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                              child: Text(metric.label,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style:
+                                      Theme.of(context).textTheme.labelMedium)),
+                          Tooltip(
+                              message: metric.helper,
+                              child: IconButton(
+                                  visualDensity: VisualDensity.compact,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(
+                                      minWidth: 24, minHeight: 24),
+                                  tooltip: metric.helper,
+                                  onPressed: () => showDialog<void>(
+                                      context: context,
+                                      builder: (c) => AlertDialog(
+                                              title: Text(metric.label),
+                                              content: Text(metric.helper),
+                                              actions: [
+                                                TextButton(
+                                                    key: const Key(
+                                                        'metric-help-close'),
+                                                    onPressed: () =>
+                                                        Navigator.pop(c),
+                                                    child: const Text('Close'))
+                                              ])),
+                                  icon:
+                                      const Icon(Icons.info_outline, size: 15)))
+                        ]),
                     const SizedBox(height: 4),
                     Text(metric.value,
                         style: Theme.of(context)
@@ -685,14 +735,29 @@ class _PulseCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium),
                     const SizedBox(height: 4),
-                    Text(
-                        metric.kind == PulseMetricKind.target
-                            ? 'View breakdown →'
-                            : 'View records →',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelMedium
-                            ?.copyWith(color: context.colors.info)),
+                    Row(children: [
+                      Icon(
+                          metric.kind == PulseMetricKind.target
+                              ? DashboardIcons.target
+                              : DashboardIcons.records,
+                          size: 13,
+                          color: context.colors.info),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                            metric.kind == PulseMetricKind.target
+                                ? 'View breakdown'
+                                : 'View records',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(color: context.colors.info)),
+                      ),
+                      Icon(Icons.arrow_forward,
+                          size: 12, color: context.colors.info),
+                    ]),
                   ]))));
 }
 
@@ -769,7 +834,7 @@ class _AttentionGrid extends StatelessWidget {
     return LayoutBuilder(builder: (context, constraints) {
       final columns = constraints.maxWidth >= 1100
           ? 3
-          : constraints.maxWidth >= 720
+          : constraints.maxWidth >= 620
               ? 2
               : 1;
       final width = (constraints.maxWidth - (columns - 1) * 14) / columns;
@@ -830,19 +895,32 @@ class _InsightCard extends StatelessWidget {
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                    color: soft,
-                    child: Text(insight.severity.name.toUpperCase(),
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: color,
-                            fontWeight: FontWeight.w700))),
+                ConceptIcon(
+                  icon: DashboardIcons.insight(insight.category),
+                  semanticLabel: '${insight.category.name} finding',
+                  color: color,
+                  backgroundColor: soft,
+                  size: 17,
+                  boxSize: 30,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
-                    child: Text(insight.title,
-                        style: Theme.of(context).textTheme.titleMedium)),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 3),
+                          color: soft,
+                          child: Text(insight.severity.name.toUpperCase(),
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: color,
+                                  fontWeight: FontWeight.w700))),
+                      const SizedBox(height: 4),
+                      Text(insight.title,
+                          style: Theme.of(context).textTheme.titleMedium),
+                    ])),
                 Tooltip(
                     message:
                         '${insight.businessSignificance}\n${insight.evidenceStrength.name} evidence. ${insight.generationReason}',
@@ -857,14 +935,29 @@ class _InsightCard extends StatelessWidget {
               Text(insight.businessSignificance,
                   style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 7),
-              Text('Next: ${insight.suggestedInvestigation}',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: context.colors.ink)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
+                decoration: BoxDecoration(
+                  color: context.colors.canvas,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.search, size: 16, color: context.colors.brand),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text('Next: ${insight.suggestedInvestigation}',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(color: context.colors.ink)),
+                      ),
+                    ]),
+              ),
               TextButton.icon(
                   onPressed: onPressed,
-                  icon: const Icon(Icons.arrow_forward, size: 16),
+                  icon: const Icon(DashboardIcons.records, size: 16),
                   label: Text(
                       'View ${insight.affectedLeadCount} supporting records')),
             ])));
@@ -1377,11 +1470,13 @@ class _ResponsivePair extends StatelessWidget {
 
 class _DiagnosticPanel extends StatelessWidget {
   const _DiagnosticPanel({
+    required this.icon,
     required this.title,
     required this.subtitle,
     required this.child,
   });
 
+  final IconData icon;
   final String title;
   final String subtitle;
   final Widget child;
@@ -1397,7 +1492,12 @@ class _DiagnosticPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: Theme.of(context).textTheme.titleLarge),
+                IconHeading(
+                  icon: icon,
+                  label: title,
+                  style: Theme.of(context).textTheme.titleLarge,
+                  color: context.colors.ink,
+                ),
                 const SizedBox(height: 4),
                 Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
               ],
@@ -1746,14 +1846,18 @@ class _OperationsPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Pipeline & delivery health',
-                style: Theme.of(context).textTheme.titleLarge),
+            IconHeading(
+              icon: DashboardIcons.pipeline,
+              label: 'Pipeline & delivery health',
+              style: Theme.of(context).textTheme.titleLarge,
+              color: context.colors.ink,
+            ),
             const SizedBox(height: 4),
             Text('Compact operational signals for the current view.',
                 style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 18),
             _OperationsRow(
-              icon: Icons.track_changes,
+              icon: DashboardIcons.pipeline,
               title: 'Active pipeline',
               value: '${data.activeCount} · ${data.activeValue}',
               detail:
@@ -1762,7 +1866,7 @@ class _OperationsPanel extends StatelessWidget {
             ),
             const Divider(height: 28),
             _OperationsRow(
-              icon: Icons.local_shipping_outlined,
+              icon: DashboardIcons.delivery,
               title: 'Delivery execution',
               value: '${data.deliveryCount} deliveries',
               detail:

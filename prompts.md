@@ -1470,3 +1470,125 @@ Then report:
 * build status
 * known limitations
 * any remaining submission risk
+
+
+---
+
+Improve the visual communication of the existing **yoyotaDealers** dashboard across all pages. Keep its branding, colours, business logic, and data behaviour.
+
+The goal is: **a viewer should recognise what a section or metric is about before reading it. The text should then confirm the meaning.**
+
+### 1. Use meaningful icons across the dashboard
+
+Review Overview, comparisons, branch and representative details, Monthly trends, Active pipeline, Deliveries, Follow-up lists, and supporting-record dialogs.
+
+Add consistent icons where they help identify:
+
+- Leads and enquiries
+- Delivered vehicles
+- Active opportunities and opportunity value
+- Conversion
+- Targets and attainment
+- Follow-up work
+- Branches and representatives
+- Vehicle models and lead sources
+- Time trends, inactivity, and overdue dates
+- Data-quality notices
+- Supporting records and downloads
+
+Use the existing Material icon library. Reuse a consistent icon for the same concept everywhere.
+
+Icons should communicate meaning, not fill empty space. Avoid adding an icon to every label or table cell.
+
+### 2. Make visual meaning accurate
+
+Distinguish **what something represents** from **whether its performance is good or bad**.
+
+For example:
+
+- A target icon identifies target attainment.
+- A clock identifies timing or inactivity.
+- A warning icon indicates an issue worth investigating.
+- A trend arrow should indicate a calculated change only when that comparison exists.
+
+Do not use an upward arrow merely because a number is large. Do not imply active opportunities are losses, or deal value is profit.
+
+Keep readable labels beside important icons. Use tooltips for compact controls and accessible labels for icon-only buttons. Never rely on colour alone.
+
+### 3. Put the six overview cards in one desktop row
+
+The six Business overview cards currently take too much vertical space on some desktop widths.
+
+Make all six appear in **one horizontal row on standard laptop and desktop layouts**, including approximately 1280, 1366, and 1440 pixels, accounting for the sidebar’s width.
+
+Do not solve this only for very wide monitors.
+
+Each card should contain:
+
+- A small, meaningful icon and clear label
+- The main value
+- One concise line of essential context, where practical
+- A clear indication that supporting records or a breakdown can be opened
+
+Keep cards aligned, evenly sized, and compact. Reduce unnecessary padding and repeated text before reducing font size.
+
+Preserve existing card actions and metric definitions. Move longer explanations into existing information controls.
+
+Do not clip values, make labels unreadable, or introduce horizontal scrolling. On tablets and phones, reflow into fewer columns when six cards cannot fit comfortably.
+
+### 4. Give “What needs attention” stronger visibility
+
+Bring the section heading and useful finding content into the initial laptop/desktop viewport as far as practical.
+
+- Reduce excess space above it.
+- Give each finding a meaningful category icon.
+- Keep severity text, observation, supporting figures, and action easy to scan.
+- Make the next investigation step visually obvious.
+- Keep additional findings expandable.
+
+Icons must reflect the actual finding category. Avoid decorating every finding with the same warning symbol or implying unsupported causes.
+
+### 5. Apply the visual language consistently
+
+Use consistent icon sizes, placement, spacing, and colour treatment across:
+
+- KPI cards
+- Section headings
+- Comparison measures and ranking badges
+- Operational summaries
+- Record details
+- Empty states and actions
+
+Prefer subtle icons beside labels and clear grouping. Avoid oversized illustrations, decorative cars, gauges, excessive badges, or animations that distract from the information.
+
+Check both light and dark themes.
+
+### 6. Preserve all existing behaviour
+
+Do not change:
+
+- Analytics formulas or denominators
+- Active, delivered, and lost distinctions
+- Targets, date filtering, or snapshot calculations
+- Routing and URL persistence
+- Supporting-record and CSV workflows
+- Data-quality or immature-cohort warnings
+- Source data
+
+Keep the dataset date in its small footer disclaimer.
+
+Any icon selection based on status or finding type must use existing typed data, not hard-coded dataset names or conclusions.
+
+### 7. Verify the result
+
+Before editing, inspect the existing widgets and identify reusable styles and components.
+
+After implementation:
+
+- Run `flutter analyze` and relevant tests.
+- Build Flutter Web for production.
+- Inspect actual browser layouts at 1280, 1366, and 1440 pixels, plus tablet and phone widths.
+- Confirm six cards fit in one row on the specified desktop widths.
+- Check that “What needs attention” is more visible.
+- Verify labels, contrast, tooltips, card actions, and supporting-record dialogs.
+- Summarise changes and report only checks actually performed.

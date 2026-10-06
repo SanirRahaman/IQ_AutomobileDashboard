@@ -7,6 +7,7 @@ import '../../application/analysis/analysis_controller.dart';
 import '../../application/analysis/analysis_filters.dart';
 import '../../app/app_theme.dart';
 import '../../insights/models/management_insight.dart';
+import '../shared/dashboard_icons.dart';
 import 'investigation_view_data.dart';
 import 'lead_evidence_dialog.dart';
 
@@ -191,8 +192,15 @@ class _InvestigationScaffold extends StatelessWidget {
                       '${DashboardPresenter.formatDate(scopedController.results.performance.start)} – ${DashboardPresenter.formatDate(scopedController.results.performance.end)}'),
                   Text(DashboardPresenter.formatScopeSummary(scopedController),
                       style: Theme.of(context).textTheme.bodyMedium),
-                  Text(viewData.title,
-                      style: Theme.of(context).textTheme.displaySmall),
+                  IconHeading(
+                    icon: repNavigation
+                        ? DashboardIcons.branch
+                        : DashboardIcons.representative,
+                    label: viewData.title,
+                    style: Theme.of(context).textTheme.displaySmall,
+                    color: context.colors.ink,
+                    iconSize: 25,
+                  ),
                   const SizedBox(height: 6),
                   Text(viewData.subtitle,
                       style: Theme.of(context).textTheme.bodyLarge),
@@ -211,7 +219,7 @@ class _InvestigationScaffold extends StatelessWidget {
                                   .toList(),
                               footer:
                                   'Confirm the next contact and expected close date with the assigned representative.'),
-                          icon: const Icon(Icons.playlist_add_check),
+                          icon: const Icon(DashboardIcons.followUp),
                           label: const Text(
                               'View / export active opportunities'))),
                   const SizedBox(height: 16),
@@ -220,6 +228,9 @@ class _InvestigationScaffold extends StatelessWidget {
                     const SizedBox(height: 20)
                   ],
                   _Section(
+                    icon: repNavigation
+                        ? DashboardIcons.branch
+                        : DashboardIcons.representative,
                     title: repNavigation
                         ? 'Why this branch is performing this way'
                         : 'Outcomes and workload',
@@ -232,6 +243,7 @@ class _InvestigationScaffold extends StatelessWidget {
                   ),
                   if (repNavigation)
                     _Section(
+                      icon: DashboardIcons.representative,
                       title: 'Sales representatives',
                       description:
                           'Open a representative to investigate stage performance and follow-up opportunities.',
@@ -254,6 +266,7 @@ class _InvestigationScaffold extends StatelessWidget {
                       ),
                     ),
                   _Section(
+                    icon: DashboardIcons.funnel,
                     title: 'Journey progression and speed',
                     description:
                         'Stage conversion and median transition time expose where follow-up may need investigation.',
@@ -265,6 +278,7 @@ class _InvestigationScaffold extends StatelessWidget {
                   if (repNavigation) ...[
                     _ResponsivePair(
                       first: _Section(
+                        icon: DashboardIcons.source,
                         title: 'Source mix and performance',
                         child: _ComparisonTable(
                           rows: viewData.sources,
@@ -272,6 +286,7 @@ class _InvestigationScaffold extends StatelessWidget {
                         ),
                       ),
                       second: _Section(
+                        icon: DashboardIcons.vehicle,
                         title: 'Model mix and performance',
                         child: _ComparisonTable(
                           rows: viewData.vehicles,
@@ -282,6 +297,7 @@ class _InvestigationScaffold extends StatelessWidget {
                   ],
                   _ResponsivePair(
                     first: _Section(
+                      icon: DashboardIcons.loss,
                       title: 'Lost reasons',
                       description: 'Reasons recorded by the sales team.',
                       child: _ComparisonTable(
@@ -290,6 +306,7 @@ class _InvestigationScaffold extends StatelessWidget {
                       ),
                     ),
                     second: _Section(
+                      icon: DashboardIcons.pipeline,
                       title: 'Active pipeline health',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -328,6 +345,7 @@ class _InvestigationScaffold extends StatelessWidget {
                     ),
                   ),
                   _Section(
+                    icon: DashboardIcons.delivery,
                     title: 'Delivery health',
                     description:
                         'Delivery duration is based on linked delivery records in this view.',
@@ -337,6 +355,7 @@ class _InvestigationScaffold extends StatelessWidget {
                     ),
                   ),
                   _Section(
+                    icon: DashboardIcons.followUp,
                     title: repNavigation
                         ? 'Branch-specific findings'
                         : 'Coaching and investigation signals',
@@ -388,10 +407,16 @@ class _InvestigationScaffold extends StatelessWidget {
 }
 
 class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child, this.description});
+  const _Section({
+    required this.title,
+    required this.child,
+    required this.icon,
+    this.description,
+  });
   final String title;
   final String? description;
   final Widget child;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -399,7 +424,12 @@ class _Section extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(title, style: Theme.of(context).textTheme.headlineSmall),
+            IconHeading(
+              icon: icon,
+              label: title,
+              style: Theme.of(context).textTheme.headlineSmall,
+              color: context.colors.ink,
+            ),
             if (description != null) ...[
               const SizedBox(height: 5),
               Text(description!, style: Theme.of(context).textTheme.bodyMedium),
@@ -621,9 +651,15 @@ class _InsightList extends StatelessWidget {
       child: Column(
         children: insights
             .map((insight) => ListTile(
+                  leading: ConceptIcon(
+                    icon: DashboardIcons.insight(insight.category),
+                    semanticLabel: '${insight.category.name} finding',
+                    color: context.colors.brand,
+                    backgroundColor: context.colors.brandSoft,
+                  ),
                   title: Text(insight.title),
                   subtitle: Text(
-                      '${insight.finding}\n${insight.affectedLeadCount} records · ${insight.evidenceStrength.name} evidence'),
+                      '${insight.severity.name.toUpperCase()} · ${insight.finding}\n${insight.affectedLeadCount} records · ${insight.evidenceStrength.name} evidence'),
                   isThreeLine: true,
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => onTap(insight),

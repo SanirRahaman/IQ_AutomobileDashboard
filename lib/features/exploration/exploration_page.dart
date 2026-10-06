@@ -6,6 +6,7 @@ import '../../application/analysis/analysis_controller.dart';
 import '../dashboard/dashboard_view_data.dart';
 import '../investigation/lead_evidence_dialog.dart';
 import '../operations/operational_pages.dart';
+import '../shared/dashboard_icons.dart';
 import '../shared/performance_navigation.dart';
 import 'exploration_presenter.dart';
 
@@ -86,6 +87,11 @@ class _ExplorationPageState extends State<ExplorationPage> {
   @override
   Widget build(BuildContext context) => OperationsScaffold(
       controller: widget.controller,
+      icon: widget.section.isComparison
+          ? DashboardIcons.dimension(_dimension)
+          : widget.section == PerformanceSection.trends
+              ? DashboardIcons.trend
+              : DashboardIcons.followUp,
       title: widget.section.isComparison
           ? 'Compare ${_dimension.label.toLowerCase()}'
           : widget.section == PerformanceSection.trends
@@ -126,8 +132,12 @@ class _ExplorationPageState extends State<ExplorationPage> {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _measureTabs(),
       const SizedBox(height: 14),
-      Text('${_metric.label} by ${_dimension.label.toLowerCase()}',
-          style: Theme.of(context).textTheme.titleLarge),
+      IconHeading(
+        icon: DashboardIcons.metric(_metric),
+        label: '${_metric.label} by ${_dimension.label.toLowerCase()}',
+        style: Theme.of(context).textTheme.titleLarge,
+        color: context.colors.ink,
+      ),
       const SizedBox(height: 6),
       Text(_metric.definition),
       const SizedBox(height: 6),
@@ -285,8 +295,12 @@ class _ExplorationPageState extends State<ExplorationPage> {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('${_trendMetric.label} by month',
-                          style: Theme.of(context).textTheme.titleLarge),
+                      IconHeading(
+                        icon: DashboardIcons.trend,
+                        label: '${_trendMetric.label} by month',
+                        style: Theme.of(context).textTheme.titleLarge,
+                        color: context.colors.ink,
+                      ),
                       const Text(
                           'Select a month to inspect its records. Hollow points indicate partial or immature periods; unavailable values are gaps.'),
                       const SizedBox(height: 12),
@@ -355,6 +369,12 @@ class _ExplorationPageState extends State<ExplorationPage> {
         ])
           Card(
               child: ListTile(
+                  leading: ConceptIcon(
+                    icon: DashboardIcons.metric(metric),
+                    semanticLabel: metric.label,
+                    color: context.colors.brand,
+                    backgroundColor: context.colors.brandSoft,
+                  ),
                   title: Text(metric.label),
                   subtitle: Text(metric.definition),
                   trailing: Text(metric.format(_data.total.value(metric))),
@@ -449,11 +469,26 @@ class _ComparisonBar extends StatelessWidget {
                             decoration: BoxDecoration(
                                 color: soft,
                                 borderRadius: BorderRadius.circular(999)),
-                            child: Text(data.badge!,
-                                style: TextStyle(
-                                    color: accent,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700)))),
+                            child: Wrap(
+                                spacing: 4,
+                                runSpacing: 2,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Icon(
+                                      data.tone == ComparisonRankTone.positive
+                                          ? Icons.check_circle_outline
+                                          : data.tone ==
+                                                  ComparisonRankTone.attention
+                                              ? Icons.manage_search_outlined
+                                              : Icons.compare_arrows,
+                                      size: 13,
+                                      color: accent),
+                                  Text(data.badge!,
+                                      style: TextStyle(
+                                          color: accent,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700)),
+                                ]))),
                   ],
                   const SizedBox(height: 8),
                   ExcludeSemantics(
@@ -463,17 +498,20 @@ class _ComparisonBar extends StatelessWidget {
                           color: accent,
                           backgroundColor: context.colors.canvas)),
                   const SizedBox(height: 6),
-                  Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      spacing: 12,
-                      runSpacing: 4,
-                      children: [
-                        Text(data.supportLabel,
-                            style: Theme.of(context).textTheme.bodyMedium),
-                        if (onTap != null)
-                          Text('View supporting records →',
-                              style: TextStyle(color: context.colors.info)),
-                      ]),
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Expanded(
+                      child: Text(data.supportLabel,
+                          style: Theme.of(context).textTheme.bodyMedium),
+                    ),
+                    if (onTap != null) ...[
+                      const SizedBox(width: 8),
+                      Icon(DashboardIcons.records,
+                          size: 14, color: context.colors.info),
+                      const SizedBox(width: 4),
+                      Text('View records →',
+                          style: TextStyle(color: context.colors.info)),
+                    ],
+                  ]),
                 ])));
   }
 }

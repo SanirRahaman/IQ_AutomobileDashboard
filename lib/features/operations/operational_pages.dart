@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../application/analysis/analysis_controller.dart';
 import '../../app/app_theme.dart';
 import '../investigation/lead_evidence_dialog.dart';
+import '../shared/dashboard_icons.dart';
 import 'operational_view_data.dart';
 
 class PipelinePage extends StatefulWidget {
@@ -38,16 +39,33 @@ class _PipelinePageState extends State<PipelinePage> {
   Widget build(BuildContext context) => OperationsScaffold(
         controller: widget.controller,
         title: 'Active opportunities',
+        icon: DashboardIcons.pipeline,
         question:
             'Which opportunities are truly active, and which require verification or intervention?',
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _KpiGrid(items: [
-              ('Active leads', _data.activeCount),
-              ('Active opportunity value', _data.activeValue),
-              ('Stale opportunity value', _data.staleValue),
-              ('Order-stage backlog', _data.backlog.primary),
+              (
+                'Active leads',
+                _data.activeCount,
+                DashboardIcons.activeOpportunity
+              ),
+              (
+                'Active opportunity value',
+                _data.activeValue,
+                DashboardIcons.opportunityValue
+              ),
+              (
+                'Stale opportunity value',
+                _data.staleValue,
+                DashboardIcons.stale
+              ),
+              (
+                'Order-stage backlog',
+                _data.backlog.primary,
+                DashboardIcons.overdue
+              ),
             ]),
             const SizedBox(height: 16),
             _DefinitionBanner(text: _data.thresholdDescription),
@@ -55,6 +73,7 @@ class _PipelinePageState extends State<PipelinePage> {
             _Pair(
               first: _Panel(
                 title: 'Pipeline by stage',
+                icon: DashboardIcons.pipeline,
                 child: _EvidenceRows(
                   rows: _data.byStage,
                   controller: widget.controller,
@@ -64,6 +83,7 @@ class _PipelinePageState extends State<PipelinePage> {
               ),
               second: _Panel(
                 title: 'Inactivity distribution',
+                icon: DashboardIcons.inactivity,
                 child: _EvidenceRows(
                   rows: _data.inactivity,
                   controller: widget.controller,
@@ -75,6 +95,7 @@ class _PipelinePageState extends State<PipelinePage> {
             _Pair(
               first: _Panel(
                 title: 'Opportunity age distribution',
+                icon: DashboardIcons.timing,
                 child: _EvidenceRows(
                   rows: _data.age,
                   controller: widget.controller,
@@ -84,6 +105,7 @@ class _PipelinePageState extends State<PipelinePage> {
               ),
               second: _Panel(
                 title: 'Expected-close and order backlog',
+                icon: DashboardIcons.overdue,
                 child: _EvidenceRows(
                   rows: [_data.slippage, _data.backlog],
                   controller: widget.controller,
@@ -95,6 +117,7 @@ class _PipelinePageState extends State<PipelinePage> {
             ),
             _Panel(
               title: 'Oldest active opportunities',
+              icon: DashboardIcons.inactivity,
               description:
                   'Age and inactivity are verification signals. They do not reclassify an active record as lost.',
               child: _EvidenceRows(
@@ -107,6 +130,7 @@ class _PipelinePageState extends State<PipelinePage> {
             _Pair(
               first: _Panel(
                 title: 'Branch breakdown',
+                icon: DashboardIcons.branch,
                 child: _EvidenceRows(
                   rows: _data.branches,
                   controller: widget.controller,
@@ -116,6 +140,7 @@ class _PipelinePageState extends State<PipelinePage> {
               ),
               second: _Panel(
                 title: 'Representative breakdown',
+                icon: DashboardIcons.representative,
                 child: _EvidenceRows(
                   rows: _data.reps,
                   controller: widget.controller,
@@ -161,19 +186,25 @@ class _DeliveryPageState extends State<DeliveryPage> {
   Widget build(BuildContext context) => OperationsScaffold(
         controller: widget.controller,
         title: 'Delivery performance',
+        icon: DashboardIcons.delivery,
         question:
             'Are completed sales being fulfilled efficiently and reliably?',
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _KpiGrid(items: [
-              ('Deliveries', _data.count),
-              ('Median delivery duration', _data.median),
-              ('Average delivery duration', _data.average),
+              ('Deliveries', _data.count, DashboardIcons.delivered),
+              ('Median delivery duration', _data.median, DashboardIcons.timing),
+              (
+                'Average delivery duration',
+                _data.average,
+                DashboardIcons.timing
+              ),
             ]),
             const SizedBox(height: 28),
             _Panel(
               title: 'Delivery-duration distribution',
+              icon: DashboardIcons.timing,
               child: _EvidenceRows(
                 rows: _data.distribution,
                 controller: widget.controller,
@@ -184,6 +215,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
             _Pair(
               first: _Panel(
                 title: 'Branch comparison',
+                icon: DashboardIcons.branch,
                 child: _EvidenceRows(
                   rows: _data.branches,
                   controller: widget.controller,
@@ -192,6 +224,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
               ),
               second: _Panel(
                 title: 'Vehicle comparison',
+                icon: DashboardIcons.vehicle,
                 child: _EvidenceRows(
                   rows: _data.vehicles,
                   controller: widget.controller,
@@ -201,6 +234,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
             ),
             _Panel(
               title: 'Recorded delay reasons',
+              icon: DashboardIcons.inactivity,
               description:
                   'Incremental time is an observed association against deliveries without a recorded delay. It does not establish causality.',
               child: _EvidenceRows(
@@ -212,6 +246,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
             ),
             _Panel(
               title: 'Expected-close timeliness',
+              icon: DashboardIcons.overdue,
               description:
                   'Shown only where the delivery can be linked to a lead expected-close date.',
               child: _EvidenceRows(
@@ -230,11 +265,13 @@ class OperationsScaffold extends StatelessWidget {
     super.key,
     required this.controller,
     required this.title,
+    required this.icon,
     required this.question,
     required this.body,
   });
   final AnalysisController controller;
   final String title;
+  final IconData icon;
   final String question;
   final Widget body;
 
@@ -261,8 +298,13 @@ class OperationsScaffold extends StatelessWidget {
                         Text(DashboardPresenter.formatScopeSummary(controller),
                             style: Theme.of(context).textTheme.bodyMedium),
                         const SizedBox(height: 8),
-                        Text(title,
-                            style: Theme.of(context).textTheme.displaySmall),
+                        IconHeading(
+                          icon: icon,
+                          label: title,
+                          style: Theme.of(context).textTheme.displaySmall,
+                          color: context.colors.ink,
+                          iconSize: 25,
+                        ),
                         const SizedBox(height: 7),
                         Text(question,
                             style: Theme.of(context).textTheme.bodyLarge),
@@ -283,7 +325,7 @@ class OperationsScaffold extends StatelessWidget {
 
 class _KpiGrid extends StatelessWidget {
   const _KpiGrid({required this.items});
-  final List<(String, String)> items;
+  final List<(String, String, IconData)> items;
 
   @override
   Widget build(BuildContext context) =>
@@ -306,8 +348,20 @@ class _KpiGrid extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(item.$1,
-                                style: Theme.of(context).textTheme.bodyMedium),
+                            Row(children: [
+                              ConceptIcon(
+                                icon: item.$3,
+                                semanticLabel: item.$1,
+                                color: context.colors.brand,
+                                backgroundColor: context.colors.brandSoft,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(item.$1,
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium),
+                              ),
+                            ]),
                             const SizedBox(height: 5),
                             Text(item.$2,
                                 style: Theme.of(context).textTheme.titleLarge),
@@ -331,21 +385,41 @@ class _DefinitionBanner extends StatelessWidget {
           color: context.colors.infoSoft,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Text('$text. Classification uses days since last activity.'),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(DashboardIcons.inactivity, size: 18, color: context.colors.info),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text('$text. Classification uses days since last activity.'),
+          ),
+        ]),
       );
 }
 
 class _Panel extends StatelessWidget {
-  const _Panel({required this.title, required this.child, this.description});
+  const _Panel({
+    required this.title,
+    required this.child,
+    this.description,
+    this.icon,
+  });
   final String title;
   final String? description;
+  final IconData? icon;
   final Widget child;
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 24),
         child:
             Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text(title, style: Theme.of(context).textTheme.headlineSmall),
+          if (icon == null)
+            Text(title, style: Theme.of(context).textTheme.headlineSmall)
+          else
+            IconHeading(
+              icon: icon!,
+              label: title,
+              style: Theme.of(context).textTheme.headlineSmall,
+              color: context.colors.ink,
+            ),
           if (description != null) ...[
             const SizedBox(height: 4),
             Text(description!, style: Theme.of(context).textTheme.bodyMedium),
@@ -369,9 +443,13 @@ class _EvidenceRows extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card(
         child: rows.isEmpty
-            ? const Padding(
-                padding: EdgeInsets.all(20),
-                child: Text('No records match these filters.'))
+            ? Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(children: [
+                  Icon(Icons.search_off, color: context.colors.muted),
+                  const SizedBox(width: 8),
+                  const Text('No records match these filters.'),
+                ]))
             : Column(
                 children: rows
                     .map((row) => ListTile(

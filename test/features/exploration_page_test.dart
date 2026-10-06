@@ -46,6 +46,7 @@ void main() {
       await tester.pumpWidget(YoyotaDealersApp(
           controller: controller, initialUri: Uri(path: '/compare/models')));
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'initial comparison');
       expect(find.text('Compare vehicle models'), findsOneWidget);
       for (final metric in comparisonMetricsFor(ComparisonDimension.model)) {
         expect(
@@ -55,10 +56,12 @@ void main() {
       await tester.ensureVisible(find.text('More measures'));
       await tester.tap(find.text('More measures'));
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'expanded measures');
       final extra = find.byKey(const Key('explore-metric-lostCount'));
       await tester.ensureVisible(extra);
       await tester.tap(extra);
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'selected extra measure');
       expect(find.text('Lost opportunities by vehicle models'), findsOneWidget);
       await tester
           .ensureVisible(find.text('More measures · Lost opportunities'));
@@ -67,14 +70,17 @@ void main() {
       await tester.ensureVisible(find.text('Ranking details & compare two'));
       await tester.tap(find.text('Ranking details & compare two'));
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'ranking details');
       await tester.ensureVisible(find.text('Compare two'));
       await tester.tap(find.text('Compare two'));
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'compare two controls');
       expect(find.byKey(const Key('compare-a')), findsOneWidget);
       expect(find.byKey(const Key('compare-b')), findsOneWidget);
       if (size.width < 760) {
         await tester.tap(find.byKey(const Key('open-navigation')));
         await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'mobile navigation');
       }
       expect(find.byKey(const Key('performance-nav-models')), findsOneWidget);
       expect(tester.takeException(), isNull);

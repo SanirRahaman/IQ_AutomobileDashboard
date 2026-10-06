@@ -5,10 +5,51 @@ import 'package:yoyota_dealers/app/yoyota_dealers_app.dart';
 import 'package:yoyota_dealers/application/analysis/analysis_controller.dart';
 import 'package:yoyota_dealers/data/models/dealership_models.dart';
 import 'package:yoyota_dealers/features/investigation/lead_evidence_dialog.dart';
+import 'package:yoyota_dealers/features/dashboard/dashboard_view_data.dart';
+import 'package:yoyota_dealers/features/shared/dashboard_icons.dart';
 
 import '../fixtures/analytics_fixture.dart';
 
 void main() {
+  for (final width in const [1280.0, 1366.0, 1440.0]) {
+    testWidgets(
+        'six overview cards share one row and expose concept icons at ${width.toInt()}px',
+        (tester) async {
+      await tester.binding.setSurfaceSize(Size(width, 900));
+      final controller = AnalysisController(dataset: _dashboardDataset());
+      addTearDown(() {
+        controller.dispose();
+        tester.binding.setSurfaceSize(null);
+      });
+
+      await tester.pumpWidget(YoyotaDealersApp(controller: controller));
+      await tester.pumpAndSettle();
+
+      const kinds = [
+        PulseMetricKind.enquiries,
+        PulseMetricKind.delivered,
+        PulseMetricKind.conversion,
+        PulseMetricKind.active,
+        PulseMetricKind.target,
+        PulseMetricKind.attention,
+      ];
+      final tops = <double>[];
+      for (final kind in kinds) {
+        final card = find.byKey(Key('kpi-${kind.name}'));
+        expect(card, findsOneWidget);
+        tops.add(tester.getTopLeft(card).dy);
+        expect(
+            find.descendant(
+                of: card, matching: find.byIcon(DashboardIcons.pulse(kind))),
+            findsWidgets);
+      }
+      expect(tops.toSet().length, 1);
+      expect(tester.getTopLeft(find.text('What needs attention')).dy,
+          lessThan(700));
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   for (final size in const [
     Size(1440, 1000),
     Size(820, 1000),

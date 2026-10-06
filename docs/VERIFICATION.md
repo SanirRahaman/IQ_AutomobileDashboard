@@ -4,6 +4,22 @@ These are dated results, not a live test status. The latest section records the
 production release checks; the original finishing-pass record is retained
 below for historical context.
 
+## Icons and six-card desktop overview — 6 October 2026
+
+- `flutter analyze`: no issues found with Flutter 3.24.4.
+- `flutter test --no-pub --reporter expanded`: all 115 tests passed.
+- `flutter build web --release --no-pub`: succeeded.
+- Browser checks of the production build confirmed six overview cards in one row
+  at desktop widths 1280, 1366 and 1440, with the management-priority heading
+  visible without scrolling. Automated layout checks cover these widths too.
+- Checked the 390-pixel mobile overview and vehicle rankings, the 820-pixel
+  tablet rankings and selected-record split panel, and the active pipeline page.
+  Text and icons remained readable without horizontal page overflow.
+- Checked the new icons in light and dark appearance, record selection and the
+  historical-data footer. CSV output remains covered by tests; no new manual
+  download check was performed for this presentation-only change.
+- Analytics, source datasets, targets and filter definitions were not changed.
+
 ## Comparison navigation and compact overview — 4 October 2026
 
 - `flutter test --no-pub --reporter expanded`: all 112 tests passed.
