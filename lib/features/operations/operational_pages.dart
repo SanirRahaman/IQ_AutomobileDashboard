@@ -257,9 +257,6 @@ class OperationsScaffold extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                            'Data as of ${DashboardPresenter.formatDate(controller.results.performance.snapshot)} · Ages and overdue alerts use this date',
-                            style: Theme.of(context).textTheme.titleMedium),
-                        Text(
                             '${DashboardPresenter.formatDate(controller.results.performance.start)} – ${DashboardPresenter.formatDate(controller.results.performance.end)}'),
                         Text(DashboardPresenter.formatScopeSummary(controller),
                             style: Theme.of(context).textTheme.bodyMedium),

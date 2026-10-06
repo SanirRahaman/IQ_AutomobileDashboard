@@ -231,16 +231,6 @@ class ApplicationShell extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodySmall),
                     ])),
-                Tooltip(
-                    message:
-                        'Data as of $snapshot. Ageing uses this dataset snapshot, not today.',
-                    child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: mobile
-                            ? const Icon(Icons.event_available_outlined,
-                                size: 19)
-                            : Text('Data as of $snapshot',
-                                style: Theme.of(context).textTheme.bodySmall))),
                 PopupMenuButton<ThemeMode>(
                     key: const Key('appearance-menu'),
                     tooltip: 'Appearance: ${appearance.mode.name}',
@@ -278,6 +268,13 @@ class ApplicationShell extends StatelessWidget {
                           size: Size(
                               constraints.maxWidth, constraints.maxHeight)),
                       child: child))),
+          Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: mobile ? 16 : 24, vertical: 6),
+              child: Text(
+                  'Historical data as of $snapshot. Ageing and overdue figures use this date.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.center)),
         ])),
       ])),
     );
