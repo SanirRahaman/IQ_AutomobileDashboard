@@ -82,4 +82,4 @@ Another idea is a chat assistant using a small AI model. A manager could ask "Wh
 
 Neither predictions nor an AI chatbot is implemented in this version. These are future ideas and today's dashboard uses Dart calculations and rule-based findings.
 
-For this version, I focused on understandable numbers, useful investigation paths, and a working Vercel deployment. The project has tests for calculations, filters, navigation and exports, along with responsive UI checks. I kept the detailed verification results in [docs/VERIFICATION.md](docs/VERIFICATION.md).
+For this version, I focused on understandable numbers, useful investigation paths, and a working Vercel deployment. The project has tests for calculations, filters, navigation and exports, along with responsive UI checks.
