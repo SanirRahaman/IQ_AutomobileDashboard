@@ -1,4 +1,4 @@
-# How to use yoyotaDealers
+# How to use DealerPulse
 
 ## A simple guide for a dealership owner or sales manager
 

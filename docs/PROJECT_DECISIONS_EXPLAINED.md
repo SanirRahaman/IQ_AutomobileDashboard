@@ -1,4 +1,4 @@
-# Why yoyotaDealers is built this way
+# Why DealerPulse is built this way
 
 A beginner-friendly explanation of the project's main decisions.
 

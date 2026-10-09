@@ -135,7 +135,7 @@ class ApplicationShell extends StatelessWidget {
                       if (wide) ...[
                         const SizedBox(width: 10),
                         Expanded(
-                            child: Text('yoyotaDealers',
+                            child: Text('DealerPulse',
                                 style: Theme.of(context).textTheme.titleMedium))
                       ],
                     ]))),

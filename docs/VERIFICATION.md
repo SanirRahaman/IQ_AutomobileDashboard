@@ -4,6 +4,16 @@ These are dated results, not a live test status. The latest section records the
 production release checks; the original finishing-pass record is retained
 below for historical context.
 
+## DealerPulse product rename — 9 October 2026
+
+- `flutter analyze`: no issues found.
+- `flutter test --no-pub --reporter expanded`: all 115 tests passed.
+- `flutter build web --release --no-pub`: succeeded.
+- Updated the sidebar, Flutter application titles, web metadata, installable-app
+  manifest and project documentation to DealerPulse.
+- Kept the internal package, saved appearance preference, source data and
+  analytics unchanged. Repository and deployment URLs remain the same.
+
 ## Icons and six-card desktop overview — 6 October 2026
 
 - `flutter analyze`: no issues found with Flutter 3.24.4.

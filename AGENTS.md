@@ -1,6 +1,6 @@
-# yoyotaDealers project rules
+# DealerPulse project rules
 
-- The product name is `yoyotaDealers`; the Dart package name is `yoyota_dealers`.
+- The product name is `DealerPulse`; the Dart package name is `yoyota_dealers`.
 - Flutter Web is the application platform.
 - Keep analytics and business logic in pure Dart services, never in widgets or `build()` methods.
 - Never modify raw source data. Treat bundled datasets as immutable inputs.

@@ -1,11 +1,11 @@
 {
-    "name": "yoyotaDealers",
-    "short_name": "yoyotaDealers",
+    "name": "DealerPulse",
+    "short_name": "DealerPulse",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Dealership decision support for yoyotaDealers.",
+    "description": "Dealership decision support for DealerPulse.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

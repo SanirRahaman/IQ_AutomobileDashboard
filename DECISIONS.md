@@ -1,4 +1,4 @@
-# Why I built yoyotaDealers this way
+# Why I built DealerPulse this way
 
 ## What I wanted this project to do
 

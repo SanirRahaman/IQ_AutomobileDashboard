@@ -16,7 +16,7 @@ consume that order. Business calculations stay out of chart widgets.
 
 ## Scope
 
-`yoyotaDealers` is a Flutter Web decision-support application. The Dart package is named `yoyota_dealers` because Dart package identifiers cannot contain uppercase letters.
+`DealerPulse` is a Flutter Web decision-support application. The Dart package is named `yoyota_dealers` because Dart package identifiers cannot contain uppercase letters.
 
 The production deployment is a static web application on Vercel. The canonical
 dealership JSON is bundled as an asset and processed in the user's browser; no

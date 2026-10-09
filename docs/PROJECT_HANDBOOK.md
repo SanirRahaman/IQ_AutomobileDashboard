@@ -1,4 +1,4 @@
-# yoyotaDealers: understand, run and change the project
+# DealerPulse: understand, run and change the project
 
 A practical guide for someone opening this repository for the first time.
 
@@ -8,7 +8,7 @@ It documents the current implementation, not a proposed future system.
 
 ## 1. What this application does
 
-`yoyotaDealers` is a Flutter Web dashboard for dealership managers. Its Dart package
+`DealerPulse` is a Flutter Web dashboard for dealership managers. Its Dart package
 name is `yoyota_dealers`. It reads a bundled dealership dataset and helps users:
 
 - Review lead outcomes, delivered vehicles and active opportunities.

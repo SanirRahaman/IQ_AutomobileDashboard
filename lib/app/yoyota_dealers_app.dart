@@ -88,7 +88,7 @@ class _YoyotaDealersAppState extends State<YoyotaDealersApp> {
       return MaterialApp.router(
         routeInformationProvider: _routeProvider,
         routeInformationParser: const AnalysisRouteParser(),
-        title: 'yoyotaDealers',
+        title: 'DealerPulse',
         debugShowCheckedModeBanner: false,
         theme: buildAppTheme(),
         darkTheme: buildAppTheme(brightness: Brightness.dark),
@@ -110,7 +110,7 @@ class _YoyotaDealersAppState extends State<YoyotaDealersApp> {
       _router!.setNewRoutePath(_routeProvider.value.uri);
     }
     return MaterialApp.router(
-      title: 'yoyotaDealers',
+      title: 'DealerPulse',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       darkTheme: buildAppTheme(brightness: Brightness.dark),

@@ -1,10 +1,13 @@
-# yoyotaDealers
+# DealerPulse
 
 A Flutter Web dashboard that turns a supplied dealership dataset into dealership business performance, target comparisons, management findings, and customer follow-up lists.
 
 **Repository:** [SanirRahaman/IQ_AutomobileDashboard](https://github.com/SanirRahaman/IQ_AutomobileDashboard)
 
 **Live website:** [iq-automobile-dashboard.vercel.app](https://iq-automobile-dashboard.vercel.app)
+
+The product is named **DealerPulse**. The internal Dart package remains
+`yoyota_dealers`; the existing repository and deployment URLs are unchanged.
 
 ## Features
 
@@ -35,7 +38,8 @@ Use **Monthly trends** for changes over time and **Follow-up lists** for support
 opportunities and CSV downloads.
 
 Use the sidebar on desktop, the icon rail on tablet, or the menu button on a phone.
-The top bar shows the current view, drill-down context and dataset date. The same
+The top bar shows the current view and drill-down context. The dataset date appears
+in the small historical-data footer. The same
 period/branch/additional-filter controls are available throughout the workspace.
 Open the appearance icon at the top right to select **Light**, **Dark** or **System**.
 System follows the device; an explicit choice is remembered in browser storage.
